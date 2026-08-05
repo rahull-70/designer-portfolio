@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
-import { Outfit, Azeret_Mono, Playfair_Display } from 'next/font/google';
+import { Outfit, Azeret_Mono, Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
 import SmoothScroll from '@/components/smooth-scroll';
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+
 
 // 1. Configure font instances
 const outfit = Outfit({
@@ -36,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang='en'
-      className={`h-full antialiased ${outfit.variable} ${azeretMono.variable} ${playfair.variable} `}
+      className={cn("h-full", "antialiased", outfit.variable, azeretMono.variable, playfair.variable, "font-sans", inter.variable)}
     >
       <body className={`min-h-full flex flex-col ${outfit.className}`}>
         <SmoothScroll>{children}</SmoothScroll>
