@@ -1,16 +1,14 @@
 import type { Metadata } from 'next';
-import { Outfit, Azeret_Mono, Playfair_Display, Inter } from 'next/font/google';
+import { Outfit, Azeret_Mono, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import SmoothScroll from '@/components/smooth-scroll';
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+import { PageTransitionProvider } from '@/components/page-transition';
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-
-// 1. Configure font instances
+// 1. Configure Outfit as --font-sans
 const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-outfit',
+  variable: '--font-sans',
   display: 'swap',
 });
 
@@ -39,11 +37,30 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang='en'
-      className={cn("h-full", "antialiased", outfit.variable, azeretMono.variable, playfair.variable, "font-sans", inter.variable)}
+      lang="en"
+      className={cn(
+        'h-full antialiased',
+        outfit.variable,
+        azeretMono.variable,
+        playfair.variable,
+        'font-sans'
+      )}
     >
-      <body className={`min-h-full flex flex-col ${outfit.className}`}>
-        <SmoothScroll>{children}</SmoothScroll>
+      <body
+        className={`min-h-full flex flex-col ${outfit.className} relative`}
+        suppressHydrationWarning
+      >
+        <SmoothScroll>
+          <PageTransitionProvider>
+            {children}
+
+            {/* Top Transparent Blur Overlay */}
+            <div className="fixed top-0 left-0 right-0 h-10 pointer-events-none z-40 backdrop-blur-md [mask-image:linear-gradient(to_bottom,black_20%,transparent)]" />
+
+            {/* Bottom Transparent Blur Overlay */}
+            <div className="fixed bottom-0 left-0 right-0 h-10 pointer-events-none z-40 backdrop-blur-md [mask-image:linear-gradient(to_top,black_20%,transparent)]" />
+          </PageTransitionProvider>
+        </SmoothScroll>
       </body>
     </html>
   );

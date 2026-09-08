@@ -2,8 +2,7 @@
 
 import { motion, useAnimation } from "motion/react";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
-
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export interface AudioLinesIconHandle {
@@ -13,47 +12,55 @@ export interface AudioLinesIconHandle {
 
 interface AudioLinesIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
+  isPlaying?: boolean;
 }
 
 const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
-  ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
+  ({ onMouseEnter, onMouseLeave, className, size = 28, isPlaying = false, ...props }, ref) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
 
     useImperativeHandle(ref, () => {
       isControlledRef.current = true;
-
       return {
         startAnimation: () => controls.start("animate"),
         stopAnimation: () => controls.start("normal"),
       };
     });
 
+    useEffect(() => {
+      if (isPlaying) {
+        controls.start("animate");
+      } else if (!isControlledRef.current) {
+        controls.start("normal");
+      }
+    }, [isPlaying, controls]);
+
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (isControlledRef.current) {
           onMouseEnter?.(e);
-        } else {
+        } else if (!isPlaying) {
           controls.start("animate");
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter, isPlaying]
     );
 
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (isControlledRef.current) {
           onMouseLeave?.(e);
-        } else {
+        } else if (!isPlaying) {
           controls.start("normal");
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave, isPlaying]
     );
 
     return (
       <div
-        className={cn(className)}
+        className={cn("inline-flex items-center justify-center", className)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         {...props}
@@ -78,8 +85,9 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
               animate: {
                 d: ["M6 6v11", "M6 10v3", "M6 6v11"],
                 transition: {
-                  duration: 1.5,
+                  duration: 1.2,
                   repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
                 },
               },
             }}
@@ -92,8 +100,9 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
               animate: {
                 d: ["M10 3v18", "M10 9v5", "M10 3v18"],
                 transition: {
-                  duration: 1,
+                  duration: 0.8,
                   repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
                 },
               },
             }}
@@ -104,10 +113,11 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
             variants={{
               normal: { d: "M14 8v7" },
               animate: {
-                d: ["M14 8v7", "M14 6v11", "M14 8v7"],
+                d: ["M14 8v7", "M14 5v14", "M14 8v7"],
                 transition: {
-                  duration: 0.8,
+                  duration: 0.65,
                   repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
                 },
               },
             }}
@@ -118,10 +128,11 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
             variants={{
               normal: { d: "M18 5v13" },
               animate: {
-                d: ["M18 5v13", "M18 7v9", "M18 5v13"],
+                d: ["M18 5v13", "M18 8v7", "M18 5v13"],
                 transition: {
-                  duration: 1.5,
+                  duration: 1.1,
                   repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
                 },
               },
             }}
