@@ -19,6 +19,7 @@ export interface MediaSpec {
 export interface ProjectData {
   id: string;
   name: string;
+  heroVideo?: string;
   heroFontClass?: string;
   overviewParagraph1: string;
   overviewParagraph2: string;
