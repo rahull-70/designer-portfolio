@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -31,196 +30,431 @@ const SplitText = ({
         );
 
         return (
-          <React.Fragment key={index}>
-            <span
-              className={`reveal-word inline opacity-0 blur-[10px] will-change-[opacity,filter] ${
-                isPlayfair ? 'italic font-playfair' : ''
-              }`}
-            >
-              {word}
-            </span>
-            {index < words.length - 1 && ' '}
-          </React.Fragment>
+          <span
+            key={index}
+            className={`reveal-word inline-block mr-[0.22em] opacity-0 will-change-[opacity,transform] ${
+              isPlayfair ? 'font-playfair italic font-normal' : ''
+            }`}
+          >
+            {word}
+          </span>
         );
       })}
     </span>
   );
 };
 
+// 120 columns matches the fine grain and shadow fidelity of the hands section
+const COLS = 110;
+const CUSTOM_RAMP = ' .:`-^~*+?s%#@$';
+const HOVER_RADIUS_CELLS = 5.0;
+
+interface ScrambleParticle {
+  r: number;
+  c: number;
+  char: string;
+  originalChar: string;
+  duration: number;
+  startTime: number;
+}
+
+class AsciiCanvasHand {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  imagePath: string;
+  cols: number;
+  rows: number = 0;
+  charGrid: string[][] = [];
+  activeParticles: Map<string, ScrambleParticle> = new Map();
+  isLoaded: boolean = false;
+  fontSize: number = 11;
+  cellWidth: number = 6;
+  cellHeight: number = 11;
+
+  constructor(canvas: HTMLCanvasElement, imagePath: string) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha: true })!;
+    this.imagePath = imagePath;
+    this.cols = COLS;
+  }
+
+  load(onComplete?: () => void) {
+    if (this.isLoaded) return;
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = this.imagePath;
+
+    img.onload = () => {
+      const charAspect = 0.55;
+      this.rows = Math.floor(
+        this.cols * ((img.height / img.width) * charAspect),
+      );
+
+      const offCanvas = document.createElement('canvas');
+      const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+      if (!offCtx) return;
+
+      offCanvas.width = this.cols;
+      offCanvas.height = this.rows;
+
+      offCtx.drawImage(img, 0, 0, this.cols, this.rows);
+      const pixels = offCtx.getImageData(0, 0, this.cols, this.rows).data;
+
+      // Sample top-left corner (0,0) for dynamic background removal
+      const bgR = pixels[0];
+      const bgG = pixels[1];
+      const bgB = pixels[2];
+
+      // Extract pixel brightness & establish min/max bounds across subject
+      const brightnessValues: number[] = [];
+      let minB = 255;
+      let maxB = 0;
+
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const alpha = pixels[i + 3];
+
+        const colorDiff = Math.hypot(r - bgR, g - bgG, b - bgB);
+
+        // Remove transparent and pure background pixels
+        if (alpha < 20 || colorDiff < 28 || (r > 240 && g > 240 && b > 240)) {
+          brightnessValues.push(-1);
+        } else {
+          const br = 0.299 * r + 0.587 * g + 0.114 * b;
+          brightnessValues.push(br);
+          if (br < minB) minB = br;
+          if (br > maxB) maxB = br;
+        }
+      }
+
+      // Map subject brightness across the complete character ramp spectrum
+      const range = maxB - minB || 1;
+      this.charGrid = [];
+
+      for (let r = 0; r < this.rows; r++) {
+        const row: string[] = [];
+        for (let c = 0; c < this.cols; c++) {
+          const idx = r * this.cols + c;
+          const br = brightnessValues[idx];
+
+          if (br === -1) {
+            row.push(' ');
+          } else {
+            // Linear stretch mapping pixel brightness to 0.0 - 1.0 range
+            const normalized = (br - minB) / range;
+
+            // Invert brightness so darker areas get high-density characters (@, #, %)
+            const darkness = 1.0 - normalized;
+
+            const rampIndex = Math.floor(darkness * (CUSTOM_RAMP.length - 1));
+            const clampedIndex = Math.max(
+              0,
+              Math.min(CUSTOM_RAMP.length - 1, rampIndex),
+            );
+
+            row.push(CUSTOM_RAMP[clampedIndex]);
+          }
+        }
+        this.charGrid.push(row);
+      }
+
+      this.resizeCanvas();
+      this.isLoaded = true;
+      if (onComplete) onComplete();
+    };
+  }
+
+  resizeCanvas() {
+    if (!this.rows || !this.cols) return;
+    const dpr = window.devicePixelRatio || 1;
+
+    // Crisp high-resolution sizing
+    this.cellWidth = Math.max(
+      4,
+      Math.floor((window.innerWidth * 0.45) / this.cols),
+    );
+    this.cellHeight = Math.floor(this.cellWidth / 0.55);
+    this.fontSize = this.cellHeight;
+
+    const displayWidth = this.cols * this.cellWidth;
+    const displayHeight = this.rows * this.cellHeight;
+
+    this.canvas.width = displayWidth * dpr;
+    this.canvas.height = displayHeight * dpr;
+    this.canvas.style.width = `${displayWidth}px`;
+    this.canvas.style.height = `${displayHeight}px`;
+
+    this.ctx.scale(dpr, dpr);
+    this.ctx.font = `500 ${this.fontSize}px 'Courier New', monospace`;
+    this.ctx.textBaseline = 'top';
+  }
+
+  triggerProximity(mouseX: number, mouseY: number) {
+    if (!this.isLoaded) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const relX = mouseX - rect.left;
+    const relY = mouseY - rect.top;
+
+    const targetCol = relX / this.cellWidth;
+    const targetRow = relY / this.cellHeight;
+
+    const rMin = Math.max(0, Math.floor(targetRow - HOVER_RADIUS_CELLS));
+    const rMax = Math.min(
+      this.rows - 1,
+      Math.ceil(targetRow + HOVER_RADIUS_CELLS),
+    );
+    const cMin = Math.max(0, Math.floor(targetCol - HOVER_RADIUS_CELLS));
+    const cMax = Math.min(
+      this.cols - 1,
+      Math.ceil(targetCol + HOVER_RADIUS_CELLS),
+    );
+
+    const now = performance.now();
+
+    for (let r = rMin; r <= rMax; r++) {
+      for (let c = cMin; c <= cMax; c++) {
+        const dy = (r - targetRow) * 1.5;
+        const dx = c - targetCol;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist / HOVER_RADIUS_CELLS <= 1.0) {
+          const probability = Math.pow(1 - dist / HOVER_RADIUS_CELLS, 1.8);
+          if (Math.random() < probability) {
+            const orig = this.charGrid[r]?.[c];
+            if (orig && orig !== ' ') {
+              const key = `${r}_${c}`;
+              if (!this.activeParticles.has(key)) {
+                this.activeParticles.set(key, {
+                  r,
+                  c,
+                  char: CUSTOM_RAMP[
+                    Math.floor(Math.random() * CUSTOM_RAMP.length)
+                  ],
+                  originalChar: orig,
+                  duration: 100 + Math.random() * 180,
+                  startTime: now,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  render() {
+    if (!this.isLoaded) return;
+    const now = performance.now();
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.activeParticles.forEach((p, key) => {
+      if (now - p.startTime > p.duration) {
+        this.activeParticles.delete(key);
+      } else {
+        p.char = CUSTOM_RAMP[Math.floor(Math.random() * CUSTOM_RAMP.length)];
+      }
+    });
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const defaultColor = isDark ? '#ffffff' : '#000000';
+    const activeBg = isDark ? '#ffffff' : '#000000';
+    const activeFg = isDark ? '#000000' : '#ffffff';
+
+    for (let r = 0; r < this.rows; r++) {
+      for (let c = 0; c < this.cols; c++) {
+        const key = `${r}_${c}`;
+        const active = this.activeParticles.get(key);
+        const char = active ? active.char : this.charGrid[r][c];
+
+        if (char !== ' ') {
+          if (active) {
+            this.ctx.fillStyle = activeBg;
+            this.ctx.fillRect(
+              c * this.cellWidth,
+              r * this.cellHeight,
+              this.cellWidth,
+              this.cellHeight,
+            );
+            this.ctx.fillStyle = activeFg;
+          } else {
+            this.ctx.fillStyle = defaultColor;
+          }
+          this.ctx.fillText(char, c * this.cellWidth, r * this.cellHeight);
+        }
+      }
+    }
+  }
+}
+
 export default function CTASection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const textBlock1Ref = useRef<HTMLDivElement>(null);
   const textBlock2Ref = useRef<HTMLDivElement>(null);
-  const imageWrap1Ref = useRef<HTMLDivElement>(null);
-  const imageWrap2Ref = useRef<HTMLDivElement>(null);
+  const canvasWrap1Ref = useRef<HTMLDivElement>(null);
+  const canvasWrap2Ref = useRef<HTMLDivElement>(null);
+  const canvas1Ref = useRef<HTMLCanvasElement>(null);
+  const canvas2Ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const canvas1 = canvas1Ref.current;
+    const canvas2 = canvas2Ref.current;
+
+    if (!canvas1 || !canvas2) return;
+
+    const asciiInstance1 = new AsciiCanvasHand(canvas1, '/img-1.png');
+    const asciiInstance2 = new AsciiCanvasHand(canvas2, '/img-2.png');
+
+    asciiInstance1.load();
+    asciiInstance2.load();
+
+    let animationFrameId: number;
+    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.targetX =
+        (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+      mouse.targetY =
+        (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+
+      asciiInstance1.triggerProximity(e.clientX, e.clientY);
+      asciiInstance2.triggerProximity(e.clientX, e.clientY);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    const handleResize = () => {
+      asciiInstance1.resizeCanvas();
+      asciiInstance2.resizeCanvas();
+    };
+    window.addEventListener('resize', handleResize);
+
+    const renderLoop = () => {
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      if (canvas1) {
+        canvas1.style.transform = `translate3d(${mouse.x * 12}px, ${
+          mouse.y * 8
+        }px, 0)`;
+      }
+      if (canvas2) {
+        canvas2.style.transform = `translate3d(${-mouse.x * 12}px, ${
+          mouse.y * 8
+        }px, 0)`;
+      }
+
+      asciiInstance1.render();
+      asciiInstance2.render();
+
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
 
     const ctx = gsap.context(() => {
-      // Slower Text blur reveals (extended scroll distance)
       [textBlock1Ref.current, textBlock2Ref.current].forEach((block) => {
         if (!block) return;
         const words = block.querySelectorAll('.reveal-word');
         if (words.length > 0) {
           gsap.fromTo(
             words,
-            { opacity: 0, filter: 'blur(10px)' },
+            { opacity: 0, y: 15 },
             {
               opacity: 1,
-              filter: 'blur(0px)',
-              stagger: 0.05,
+              y: 0,
+              stagger: 0.03,
+              duration: 0.4,
               ease: 'power1.out',
               scrollTrigger: {
                 trigger: block,
-                start: 'top 90%',
-                end: 'top 15%',
-                scrub: 1.5,
+                start: 'top 85%',
+                end: 'top 30%',
+                scrub: 1,
               },
-            }
+            },
           );
         }
       });
 
-      // Slower Curtain Reveal Animation for Images
-      [imageWrap1Ref.current, imageWrap2Ref.current].forEach((wrap) => {
+      [canvasWrap1Ref.current, canvasWrap2Ref.current].forEach((wrap) => {
         if (!wrap) return;
-
-        const img = wrap.querySelector('img');
-
         gsap.fromTo(
           wrap,
-          { clipPath: 'inset(100% 0% 0% 0%)' },
+          { opacity: 0, scale: 0.95 },
           {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            ease: 'power1.inOut',
+            opacity: 1,
+            scale: 1,
+            ease: 'power2.out',
             scrollTrigger: {
               trigger: wrap,
-              start: 'top 95%',
-              end: 'top 10%',
-              scrub: 1.8,
+              start: 'top 85%',
+              end: 'top 40%',
+              scrub: 1,
             },
-          }
+          },
         );
-
-        // Counter-parallax/zoom effect
-        if (img) {
-          gsap.fromTo(
-            img,
-            { scale: 1.3, y: -40 },
-            {
-              scale: 1,
-              y: 0,
-              ease: 'power1.inOut',
-              scrollTrigger: {
-                trigger: wrap,
-                start: 'top 95%',
-                end: 'top 10%',
-                scrub: 1.8,
-              },
-            }
-          );
-        }
       });
     }, containerRef);
 
-    return () => ctx.revert();
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+      ctx.revert();
+    };
   }, []);
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full select-none bg-background text-foreground"
+      className='relative w-full select-none bg-background text-foreground'
     >
       {/* SECTION 1: Top CTA */}
-      <section className="relative w-full min-h-screen flex flex-col md:grid md:grid-cols-12 items-center py-20 overflow-hidden">
-        {/* Pushed Text Block: Centered near columns 3-7 directly above bottom image */}
+      <section className='relative flex flex-col items-center w-full min-h-screen py-20 overflow-hidden md:grid md:grid-cols-12'>
         <div
           ref={textBlock1Ref}
-          className="px-8 md:px-0 md:col-span-5 md:col-start-3 max-w-xs md:max-w-md w-full mb-12 md:mb-0"
+          className='w-full max-w-xs px-8 mb-12 md:px-0 md:col-span-5 md:col-start-3 md:max-w-md md:mb-0'
         >
-          <p className="font-sans text-lg md:text-[22px] leading-relaxed text-justify">
+          <p className='font-sans text-lg md:text-[22px] leading-relaxed text-justify'>
             <SplitText
-              text="Looking for an internship or full-time opportunity. Excited to join a creative team, solve meaningful problems, and design experiences people love using."
-              playfairWords={[
-                'internship',
-                'or',
-                'full-time',
-                'opportunity.',
-              ]}
+              text='Looking for an internship or full-time opportunity. Excited to join a creative team, solve meaningful problems, and design experiences people love using.'
+              playfairWords={['internship', 'or', 'full-time', 'opportunity.']}
             />
           </p>
         </div>
 
-        {/* Right Image Container (Flush right edge) */}
-        <div className="md:col-span-4 md:col-start-9 w-full flex justify-end">
+        {/* Right ASCII Canvas Container */}
+        <div className='flex justify-end w-full pointer-events-auto md:col-span-5 md:col-start-8'>
           <div
-            ref={imageWrap1Ref}
-            className="relative w-[85vw] sm:w-[50vw] md:w-full h-[50vh] md:h-[75vh] overflow-hidden shadow-2xl mr-0 rounded-l-2xl md:rounded-l-3xl will-change-[clip-path]"
-            style={{ clipPath: 'inset(100% 0% 0% 0%)' }}
+            ref={canvasWrap1Ref}
+            className='relative flex items-center justify-end overflow-hidden'
           >
-            <span className="absolute top-4 left-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute top-4 right-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute bottom-4 left-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute bottom-4 right-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-
-            <Image
-              src="/img-1.png"
-              alt="Sculpture art"
-              fill
-              priority
-              className="object-cover will-change-transform"
-            />
+            <canvas ref={canvas1Ref} className='block will-change-transform' />
           </div>
         </div>
       </section>
 
       {/* SECTION 2: Bottom CTA */}
-      <section className="w-full min-h-screen flex flex-col-reverse md:grid md:grid-cols-12 items-center px-8 md:px-16 py-20 gap-12">
-        {/* Left Image Container (Aligned to columns 2-6) */}
-        <div className="md:col-span-5 md:col-start-2 w-full flex justify-start">
+      <section className='flex flex-col-reverse items-center w-full min-h-screen gap-12 px-8 py-20 md:grid md:grid-cols-12 md:px-16'>
+        {/* Left ASCII Canvas Container */}
+        <div className='flex justify-start w-full pointer-events-auto md:col-span-5 md:col-start-2'>
           <div
-            ref={imageWrap2Ref}
-            className="relative w-[80vw] sm:w-[50vw] md:w-full h-[50vh] md:h-[75vh] overflow-hidden shadow-2xl rounded-2xl md:rounded-3xl will-change-[clip-path]"
-            style={{ clipPath: 'inset(100% 0% 0% 0%)' }}
+            ref={canvasWrap2Ref}
+            className='relative flex items-center justify-start overflow-hidden'
           >
-            <span className="absolute top-4 left-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute top-4 right-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute bottom-4 left-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-            <span className="absolute bottom-4 right-4 z-20 text-[11px] font-mono text-foreground/60 pointer-events-none">
-              +
-            </span>
-
-            <Image
-              src="/img-2.png"
-              alt="Sculpture art fragments"
-              fill
-              priority
-              className="object-cover will-change-transform"
-            />
+            <canvas ref={canvas2Ref} className='block will-change-transform' />
           </div>
         </div>
 
-        {/* Right Text Block (Aligned to columns 8-11) */}
+        {/* Right Text Block */}
         <div
           ref={textBlock2Ref}
-          className="md:col-span-4 md:col-start-8 max-w-xs md:max-w-sm w-full"
+          className='w-full max-w-xs md:col-span-4 md:col-start-8 md:max-w-sm'
         >
-          <p className="font-sans text-lg md:text-[22px] leading-relaxed text-justify">
+          <p className='font-sans text-lg md:text-[22px] leading-relaxed text-justify'>
             <SplitText
               text="Currently available for internships, freelance, and collaborative projects. Let's create products that are simple thoughtful and impactful work."
               playfairWords={[

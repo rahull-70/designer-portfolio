@@ -1,11 +1,21 @@
 import type { Metadata } from 'next';
-import { Outfit, Azeret_Mono, Playfair_Display } from 'next/font/google';
+import {
+  Outfit,
+  Azeret_Mono,
+  Playfair_Display,
+  Bebas_Neue,
+  DM_Mono,
+  Oi,
+  Inter,
+  Luckiest_Guy,
+  Comme,
+} from 'next/font/google';
 import './globals.css';
 import SmoothScroll from '@/components/smooth-scroll';
 import { cn } from '@/lib/utils';
 import { PageTransitionProvider } from '@/components/page-transition';
 
-// 1. Configure Outfit as --font-sans
+// Portfolio Fonts
 const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -22,6 +32,47 @@ const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   style: ['italic'],
+  display: 'swap',
+});
+
+// External Project Fonts (Google Fonts)
+const bebasNeue = Bebas_Neue({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-bebas',
+  display: 'swap',
+});
+
+const dmMono = DM_Mono({
+  weight: ['300', '400', '500'],
+  subsets: ['latin'],
+  variable: '--font-dm-mono',
+  display: 'swap',
+});
+
+const oi = Oi({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-oi',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const luckiestGuy = Luckiest_Guy({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-luckiest-guy',
+  display: 'swap',
+});
+
+const comme = Comme({
+  subsets: ['latin'],
+  variable: '--font-comme',
   display: 'swap',
 });
 
@@ -43,6 +94,12 @@ export default function RootLayout({
         outfit.variable,
         azeretMono.variable,
         playfair.variable,
+        bebasNeue.variable,
+        dmMono.variable,
+        oi.variable,
+        inter.variable,
+        luckiestGuy.variable,
+        comme.variable,
         'font-sans'
       )}
     >

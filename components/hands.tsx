@@ -437,7 +437,7 @@ const HandsSection = () => {
   return (
     <section
       ref={handsSectionRef}
-      className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-background select-none text-black dark:text-white"
+      className="relative flex items-center justify-center w-full h-screen overflow-hidden text-black select-none bg-background dark:text-white"
     >
       {/* Left ASCII Hand Container */}
       <div
@@ -450,9 +450,9 @@ const HandsSection = () => {
       {/* Center Framed Quote */}
       <div
         ref={middleTextRef}
-        className="relative z-20 text-center px-4 max-w-xs sm:max-w-md pointer-events-none"
+        className="relative z-20 max-w-xs px-4 text-center pointer-events-none sm:max-w-md"
       >
-        <p className="font-playfair italic text-lg sm:text-2xl md:text-3xl text-foreground/90 tracking-tight leading-relaxed">
+        <p className="text-lg italic leading-relaxed tracking-tight font-playfair sm:text-2xl md:text-3xl text-foreground/90">
           <SplitText text="In simple words, i love making websites." />
         </p>
       </div>

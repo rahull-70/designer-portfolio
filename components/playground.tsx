@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import gsap from 'gsap';
 
 // ============================================================================
@@ -8,19 +8,70 @@ import gsap from 'gsap';
 // ============================================================================
 
 const PLAYGROUND_ITEMS = [
-  { id: 1, label: '01', videoUrl: '/videos/component-1.mp4' },
-  { id: 2, label: '02', videoUrl: '/videos/component-2.mp4' },
-  { id: 3, label: '03', videoUrl: '/videos/component-3.mp4' },
-  { id: 4, label: '04', videoUrl: '/videos/component-4.mp4' },
-  { id: 5, label: '05', videoUrl: '/videos/component-5.mp4' },
-  { id: 6, label: '06', videoUrl: '/videos/component-6.mp4' },
-  { id: 7, label: '07', videoUrl: '/videos/component-7.mp4' },
-  { id: 8, label: '08', videoUrl: '/videos/component-8.mp4' },
-  { id: 9, label: '09', videoUrl: '/videos/component-9.mp4' },
-  { id: 10, label: '10', videoUrl: '/videos/component-10.mp4' },
-  { id: 11, label: '11', videoUrl: '/videos/component-11.mp4' },
-  { id: 12, label: '12', videoUrl: '/videos/component-12.mp4' },
+  { id: 1, label: '01', videoUrl: '/playground-videos/component-1.mp4' },
+  { id: 2, label: '02', videoUrl: '/playground-videos/component-2.mp4' },
+  { id: 3, label: '03', videoUrl: '/playground-videos/component-3.mp4' },
+  { id: 4, label: '04', videoUrl: '/playground-videos/component-4.mp4' },
+  { id: 5, label: '05', videoUrl: '/playground-videos/component-5.mp4' },
+  { id: 6, label: '06', videoUrl: '/playground-videos/component-6.mp4' },
+  { id: 7, label: '07', videoUrl: '/playground-videos/component-7.mp4' },
+  { id: 8, label: '08', videoUrl: '/playground-videos/component-8.mp4' },
+  { id: 9, label: '09', videoUrl: '/playground-videos/component-9.mp4' },
+  { id: 10, label: '10', videoUrl: '/playground-videos/component-10.mp4' },
+  { id: 11, label: '11', videoUrl: '/playground-videos/component-11.mp4' },
+  { id: 12, label: '12', videoUrl: '/playground-videos/component-12.mp4' },
 ];
+
+// ============================================================================
+// 🎥 LAZY VIDEO COMPONENT (Only renders video stream on active hover)
+// ============================================================================
+
+const VideoCard = memo(
+  ({
+    isHovered,
+    videoUrl,
+  }: {
+    isHovered: boolean;
+    videoUrl: string;
+  }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+      if (isHovered && videoRef.current) {
+        videoRef.current.play().catch(() => {
+          // Fallback handling for browser autoplay policies
+        });
+      } else if (!isHovered && videoRef.current) {
+        videoRef.current.pause();
+      }
+    }, [isHovered]);
+
+    return (
+      <div
+        className={`absolute top-4 left-6 w-48 h-36 bg-black/90 overflow-hidden shadow-2xl transition-all duration-300 ease-out z-30 pointer-events-none ${
+          isHovered
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 scale-90 translate-y-2'
+        }`}
+      >
+        {isHovered && videoUrl && (
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="object-cover w-full h-full"
+          />
+        )}
+      </div>
+    );
+  }
+);
+
+VideoCard.displayName = 'VideoCard';
 
 // ============================================================================
 // 🚀 PLAYGROUND MAIN COMPONENT WITH REVEAL ANIMATION
@@ -42,7 +93,6 @@ export default function Playground() {
     if (!initialDotRef.current || isRevealed) return;
 
     const ctx = gsap.context(() => {
-      // Scale-in reveal for the starter dot + label text
       const introTl = gsap.timeline();
 
       introTl
@@ -58,7 +108,6 @@ export default function Playground() {
           '-=0.3'
         );
 
-      // Continuous breathing / ping effect to draw attention
       gsap.to(pingRingRef.current, {
         scale: 2.5,
         opacity: 0,
@@ -82,7 +131,6 @@ export default function Playground() {
       },
     });
 
-    // 1. Shrink and fade out the center trigger button
     timeline.to(initialDotRef.current, {
       scale: 0,
       opacity: 0,
@@ -90,7 +138,6 @@ export default function Playground() {
       ease: 'power2.in',
     });
 
-    // 2. Animate all grid items outward from scale 0 to 1 with an elastic stagger
     if (gridContainerRef.current) {
       const items = Array.from(gridContainerRef.current.children);
 
@@ -117,24 +164,22 @@ export default function Playground() {
   };
 
   return (
-    <section className="relative w-full min-h-screen text-foreground font-sans p-8 md:p-16 flex flex-col items-center justify-center select-none overflow-hidden">
+    <section className="relative flex flex-col items-center justify-center w-full min-h-screen p-8 overflow-hidden font-sans select-none text-foreground md:p-16">
       {/* Central Starter Dot (Shown before reveal) */}
       {!isRevealed && (
         <button
           ref={initialDotRef}
           onClick={handleReveal}
-          className="absolute z-50 group flex flex-col items-center justify-center cursor-pointer outline-none"
+          className="absolute z-50 flex flex-col items-center justify-center outline-none cursor-pointer group"
         >
           <div className="relative flex items-center justify-center">
-            {/* Ambient Breathing Outer Ring */}
             <div
               ref={pingRingRef}
-              className="absolute w-4 h-4 rounded-full border border-foreground/40 pointer-events-none"
+              className="absolute w-4 h-4 border rounded-full pointer-events-none border-foreground/40"
             />
-            {/* Main Interactive Center Dot */}
             <div
               ref={dotCircleRef}
-              className="w-4 h-4 rounded-full bg-foreground group-hover:scale-150 transition-transform duration-300 shadow-md"
+              className="w-4 h-4 transition-transform duration-300 rounded-full shadow-md bg-foreground group-hover:scale-150"
             />
           </div>
           <span
@@ -146,10 +191,10 @@ export default function Playground() {
         </button>
       )}
 
-      {/* Grid Container (3 rows of 4 items = 12 items) */}
+      {/* Grid Container */}
       <div
         ref={gridContainerRef}
-        className="w-full max-w-6xl mx-auto py-12 grid grid-cols-2 sm:grid-cols-4 gap-y-28 gap-x-16 md:gap-y-40 md:gap-x-24 place-items-center"
+        className="grid w-full max-w-6xl grid-cols-2 py-12 mx-auto sm:grid-cols-4 gap-y-28 gap-x-16 md:gap-y-40 md:gap-x-24 place-items-center"
       >
         {PLAYGROUND_ITEMS.map((item) => {
           const isHovered = activeItem === item.id;
@@ -164,32 +209,15 @@ export default function Playground() {
               onMouseLeave={() => isRevealed && setActiveItem(null)}
             >
               {/* Number and Dot Trigger */}
-              <div className="inline-flex items-center gap-2 cursor-pointer z-10">
-                <span className="text-xs font-mono font-normal text-zinc-600 transition-colors duration-200 group-hover:text-foreground">
+              <div className="z-10 inline-flex items-center gap-2 cursor-pointer">
+                <span className="font-mono text-xs font-normal transition-colors duration-200 text-zinc-600 group-hover:text-foreground">
                   {item.label}
                 </span>
                 <div className="w-2.5 h-2.5 rounded-full bg-foreground transition-transform duration-200 group-hover:scale-125" />
               </div>
 
-              {/* Hover Popup Video Player Card */}
-              <div
-                className={`absolute top-4 left-6 w-48 h-36 bg-black/90 overflow-hidden shadow-2xl transition-all duration-300 ease-out z-30 pointer-events-none ${
-                  isHovered
-                    ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 scale-90 translate-y-2'
-                }`}
-              >
-                {item.videoUrl && (
-                  <video
-                    src={item.videoUrl}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
+              {/* Lazy-Loaded Hover Popup Video Player Card */}
+              <VideoCard isHovered={isHovered} videoUrl={item.videoUrl} />
             </div>
           );
         })}

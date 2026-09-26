@@ -28,17 +28,13 @@ const SplitText = ({
         return (
           <span
             key={index}
-            className={`inline-block overflow-hidden py-3 -my-3 vertical-bottom ${
+            className={`reveal-word inline-block opacity-0 blur-[12px] will-change-[opacity,filter,transform] ${
               isLastWord ? 'mr-0' : 'mr-[0.25em]'
+            } ${
+              isPlayfair ? 'font-playfair italic font-normal px-[0.05em]' : ''
             }`}
           >
-            <span
-              className={`reveal-word inline-block ${
-                isPlayfair ? 'font-playfair italic font-normal px-[0.05em]' : ''
-              }`}
-            >
-              {word}
-            </span>
+            {word}
           </span>
         );
       })}
@@ -56,22 +52,46 @@ const Hero = () => {
 
     const ctx = gsap.context(() => {
       const words = container?.querySelectorAll('.reveal-word');
+      const nameReveal = container?.querySelectorAll('.reveal-name');
+
+      const tl = gsap.timeline();
 
       if (words && words.length > 0) {
-        gsap.fromTo(
+        tl.fromTo(
           words,
           {
-            yPercent: 130,
-            rotateX: -20,
+            opacity: 0,
+            filter: 'blur(12px)',
+            y: 16,
           },
           {
-            yPercent: 0,
-            rotateX: 0,
+            opacity: 1,
+            filter: 'blur(0px)',
+            y: 0,
             duration: 1,
-            stagger: 0.025,
-            ease: 'power4.out',
-            force3D: true,
+            stagger: 0.05,
+            ease: 'power3.out',
           }
+        );
+      }
+
+      if (nameReveal && nameReveal.length > 0) {
+        tl.fromTo(
+          nameReveal,
+          {
+            opacity: 0,
+            filter: 'blur(16px)',
+            y: 30,
+          },
+          {
+            opacity: 1,
+            filter: 'blur(0px)',
+            y: 0,
+            duration: 1.2,
+            stagger: 0.1,
+            ease: 'power3.out',
+          },
+          '-=0.6'
         );
       }
     }, containerRef);
@@ -84,15 +104,31 @@ const Hero = () => {
       ref={containerRef}
       className="relative w-full overflow-hidden select-none text-foreground bg-background"
     >
+      
+      {/* NOISE BACKGROUND OVERLAY */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.04] dark:opacity-[0.07] mix-blend-overlay">
+        <svg className="w-full h-full">
+          <filter id="hero-noise">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.8"
+              numOctaves="4"
+              stitchTiles="stitch"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#hero-noise)" />
+        </svg>
+      </div>
+
       {/* HERO SECTION */}
       <section
         ref={heroSectionRef}
-        className="relative h-screen w-full flex flex-col justify-between"
+        className="relative z-10 flex flex-col justify-between w-full h-screen"
       >
-        {/* HERO TEXT OVERLAYS - Strictly px-5 to match Nav */}
+        {/* TOP CONTENT CONTAINER */}
         <div
           ref={textContainerRef}
-          className="relative z-20 w-full h-full flex flex-col justify-between px-5 py-7 pointer-events-none"
+          className="relative z-20 flex flex-col justify-between w-full px-5 pointer-events-none py-7"
         >
           {/* Top Left Paragraph */}
           <div className="max-w-md pt-20 text-[20px] leading-snug">
@@ -103,20 +139,18 @@ const Hero = () => {
               />
             </p>
           </div>
+        </div>
 
-          {/* Bottom Right Heading Block */}
-          <div className="text-right font-sans self-end pb-12 sm:pb-16 2xl:pb-20 pr-0">
-            <h1 className="text-[clamp(4.5rem,10vw,15rem)] leading-[0.85] tracking-tight flex flex-col items-end">
-              <span className="block pr-0">
-                {/* <SplitText text="Less Noise" /> */}
-              </span>
-
-              {/* Inline heading row with proportional negative offset */}
-              <span className="inline-flex items-center -mt-[0.1em] font-playfair italic font-normal pr-0">
-                {/* <SplitText text="Scream" playfairWords={['scream']} /> */}
-              </span>
-            </h1>
-          </div>
+        {/* BOTTOM DISPLAY NAME - CENTERED & EXPANDED */}
+        <div className="flex items-end justify-center w-full pb-2 pointer-events-none sm:pb-15">
+          <h1 className="flex items-baseline justify-center tracking-[-0.04em] text-[17.5vw] leading-[0.8] font-light text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+            <span className="reveal-name inline-block opacity-0 blur-[16px] will-change-[opacity,filter,transform]">
+              rahul
+            </span>
+            <span className="reveal-name inline-block opacity-0 blur-[16px] will-change-[opacity,filter,transform] font-playfair italic font-normal ml-[0.08em]">
+              parihar
+            </span>
+          </h1>
         </div>
       </section>
     </div>

@@ -100,7 +100,7 @@ class AsciiCanvasHand {
     if (!this.rows || !this.cols) return;
     const dpr = window.devicePixelRatio || 1;
     // Updated cell width calculation targeting dynamic 44% width span
-    this.cellWidth = Math.max(4, Math.floor((window.innerWidth * 0.44) / this.cols));
+    this.cellWidth = Math.max(4, Math.floor((window.innerWidth * 0.48) / this.cols));
     this.cellHeight = Math.floor(this.cellWidth / 0.55);
     this.fontSize = this.cellHeight;
 
@@ -389,7 +389,7 @@ export default function Footer() {
   return (
     <footer
       ref={footerRef}
-      className="relative w-full h-screen font-sans px-6 pt-5 pb-8 flex flex-col justify-between select-none overflow-hidden text-foreground bg-background"
+      className="relative flex flex-col justify-between w-full h-screen px-6 pt-5 pb-8 overflow-hidden font-sans select-none text-foreground bg-background"
     >
       {/* Left Hand Outer Wrapper (Dynamic 44vw) */}
       <div
@@ -414,18 +414,18 @@ export default function Footer() {
       </div>
 
       {/* Main Content Container */}
-      <div className="relative z-10 w-full h-full flex flex-col justify-between pb-4 pointer-events-none">
-        <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          <div className="md:col-span-6 pointer-events-auto">
+      <div className="relative z-10 flex flex-col justify-between w-full h-full pb-4 pointer-events-none">
+        <div className="grid items-start w-full grid-cols-1 gap-8 md:grid-cols-12">
+          <div className="pointer-events-auto md:col-span-6">
             <a
               href="mailto:r.prahulparihar70@gmail.com"
               className="group block font-sans text-[7vw] sm:text-[5vw] md:text-[3.8vw] font-normal leading-[1.05] tracking-tight hover:opacity-80 transition-opacity"
             >
               <div className="overflow-hidden">
-                <div className="footer-reveal-text inline-block">r.prahulparihar70</div>
+                <div className="inline-block footer-reveal-text">r.prahulparihar70</div>
               </div>
               <div className="pl-[20%] overflow-hidden">
-                <div className="footer-reveal-text inline-block">@gmail.com</div>
+                <div className="inline-block footer-reveal-text">@gmail.com</div>
               </div>
             </a>
           </div>
@@ -439,7 +439,7 @@ export default function Footer() {
             ].map((link) => (
               <div key={link.label} className="overflow-hidden">
                 <div className="footer-reveal-text">
-                  <Link href={link.href} className="group relative w-fit block">
+                  <Link href={link.href} className="relative block group w-fit">
                     <RollingText label={link.label} />
                   </Link>
                 </div>
@@ -460,7 +460,7 @@ export default function Footer() {
                     href={link.href}
                     target={link.target}
                     rel="noopener noreferrer"
-                    className="group relative w-fit block"
+                    className="relative block group w-fit"
                   >
                     <RollingText label={link.label} />
                   </Link>
@@ -470,14 +470,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-end pointer-events-auto">
-          <div className="md:col-span-6 overflow-hidden">
+        <div className="grid items-end w-full grid-cols-1 gap-8 pointer-events-auto md:grid-cols-12">
+          <div className="overflow-hidden md:col-span-6">
             <p className="footer-reveal-text font-sans text-[10px] sm:text-[11px] text-zinc-600 tracking-wider">
               ©2026 Rahul. All Rights Reserved
             </p>
           </div>
 
-          <div className="md:col-span-3 md:col-start-10 overflow-hidden">
+          <div className="overflow-hidden md:col-span-3 md:col-start-10">
             <p className="footer-reveal-text text-[20px] font-sans leading-relaxed text-foreground text-justify">
               Designer by curiosity, developer by obsession. I like exploring ideas, building
               things, and learning something new along the way.

@@ -9,6 +9,8 @@ import ShowcaseSection from '@/components/case-study/showcase';
 import { notFound } from 'next/navigation';
 import Footer from '@/components/footer';
 import Nav from '@/components/nav';
+import ShowcaseVideoSection from '@/components/case-study/showcase-video';
+import ProjectPagination from '@/components/case-study/ProjectPagination';
 
 export default async function ProjectPage({
   params,
@@ -25,15 +27,17 @@ export default async function ProjectPage({
   return (
     <>
       <Nav />
-      <main className='w-full  min-h-screen'>
+      <main className='w-full min-h-screen'>
         <HeroSection data={project} />
         <OverviewSection data={project} />
         <ChallengesSection data={project} />
 
         <ResearchSection data={project} />
+        <ShowcaseVideoSection data={project} />
         <SolutionSection data={project} />
         <SystemDesignSection data={project} />
         <ShowcaseSection data={project} />
+        <ProjectPagination currentSlug={resolvedParams.id} />
       </main>
       <Footer />
     </>
