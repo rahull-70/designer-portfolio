@@ -6,7 +6,9 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 // ============================================================================
 // ⚙️ ULTRASMOOTH ANIMATION CONFIG
@@ -16,12 +18,12 @@ const CONFIG = {
   CENTER_Z_OVERLAY: 1.5,
   SCALE_PROXIMITY_FOCUS: 0.45,
 
-  SCALE_SMOOTHNESS: 0.045,
-  MOVEMENT_SMOOTHNESS: 0.045,
+  SCALE_SMOOTHNESS: 0.08,
+  MOVEMENT_SMOOTHNESS: 0.08,
 
   DRAG_SENSITIVITY: 0.00025,
   DRAG_FRICTION: 0.92,
-  HOVER_LIFT_AMOUNT: 0.6, // Vertical popout distance when hovered
+  HOVER_LIFT_AMOUNT: 0.6,
 };
 
 const baseImages = [
@@ -45,14 +47,18 @@ export default function Projects() {
     if (!canvasContainerRef.current || !sectionRef.current) return;
 
     const container = canvasContainerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    let width = container.clientWidth;
+    let height = container.clientHeight;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.z = 20;
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: window.devicePixelRatio < 2,
+      powerPreference: 'high-performance',
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
@@ -60,19 +66,19 @@ export default function Projects() {
     const trackGroup = new THREE.Group();
     scene.add(trackGroup);
 
-    // Drop shadow texture
+    // Dynamic drop shadow texture generation (Canvas optimized)
     const shadowCanvas = document.createElement('canvas');
-    shadowCanvas.width = 256;
-    shadowCanvas.height = 256;
+    shadowCanvas.width = 128;
+    shadowCanvas.height = 128;
     const ctx2d = shadowCanvas.getContext('2d');
     if (ctx2d) {
-      const gradient = ctx2d.createRadialGradient(128, 128, 20, 128, 128, 128);
+      const gradient = ctx2d.createRadialGradient(64, 64, 10, 64, 64, 64);
       gradient.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
       gradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.15)');
       gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.05)');
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx2d.fillStyle = gradient;
-      ctx2d.fillRect(0, 0, 256, 256);
+      ctx2d.fillRect(0, 0, 128, 128);
     }
     const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
 
@@ -80,85 +86,79 @@ export default function Projects() {
     const meshes: THREE.Mesh[] = [];
     const shadowMeshes: THREE.Mesh[] = [];
 
-    const cardSpacing = 3.6; // Preserved original spacing
+    const cardSpacing = 3.6;
     const totalCards = imageUrls.length;
     const totalTrailLength = totalCards * cardSpacing;
 
-    let loadedCount = 0;
+    // Shared geometries to minimize memory footprint & GPU draw calls
+    const sharedCardGeometry = new THREE.PlaneGeometry(5.2, 5.2 / (16 / 9));
+    const sharedShadowGeometry = new THREE.PlaneGeometry(6.0, 6.0 / (16 / 9));
 
-    const createFallbackTexture = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 320;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        const grad = ctx.createLinearGradient(0, 0, 512, 320);
-        grad.addColorStop(0, '#111111');
-        grad.addColorStop(1, '#333333');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 512, 320);
-      }
-      return new THREE.CanvasTexture(canvas);
-    };
-
-    imageUrls.forEach((url, index) => {
-      textureLoader.load(
-        url,
-        (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.generateMipmaps = true;
-          texture.minFilter = THREE.LinearMipmapLinearFilter;
-
-          const img = texture.image;
-          const aspect = img && img.width && img.height ? img.width / img.height : 16 / 9;
-          createCard(texture, index, aspect);
-        },
-        undefined,
-        () => {
-          const fallback = createFallbackTexture();
-          createCard(fallback, index, 16 / 9);
-        }
-      );
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      map: shadowTexture,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0.35,
     });
 
-    function createCard(texture: THREE.Texture, index: number, aspect: number) {
-      const baseWidth = 5.2;
-      const baseHeight = baseWidth / aspect;
+    // Lazy load fallback canvas
+    let cachedFallbackTexture: THREE.CanvasTexture | null = null;
+    const getFallbackTexture = () => {
+      if (cachedFallbackTexture) return cachedFallbackTexture;
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const grad = ctx.createLinearGradient(0, 0, 256, 160);
+        grad.addColorStop(0, '#111111');
+        grad.addColorStop(1, '#222222');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 160);
+      }
+      cachedFallbackTexture = new THREE.CanvasTexture(canvas);
+      return cachedFallbackTexture;
+    };
 
-      const cardGeometry = new THREE.PlaneGeometry(baseWidth, baseHeight);
-      const shadowGeometry = new THREE.PlaneGeometry(baseWidth + 0.8, baseHeight + 0.8);
-
+    function createCard(texture: THREE.Texture, index: number) {
       const material = new THREE.MeshBasicMaterial({
         map: texture,
         side: THREE.DoubleSide,
       });
 
-      const shadowMaterial = new THREE.MeshBasicMaterial({
-        map: shadowTexture,
-        transparent: true,
-        depthWrite: false,
-        opacity: 0.35,
-      });
-
-      const mesh = new THREE.Mesh(cardGeometry, material);
-      mesh.userData = { 
+      const mesh = new THREE.Mesh(sharedCardGeometry, material);
+      mesh.userData = {
         index,
         hoverLift: 0,
-        targetHoverLift: 0
+        targetHoverLift: 0,
       };
       trackGroup.add(mesh);
       meshes.push(mesh);
 
-      const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
+      const shadowMesh = new THREE.Mesh(sharedShadowGeometry, shadowMaterial);
       shadowMesh.userData = { index };
       trackGroup.add(shadowMesh);
       shadowMeshes.push(shadowMesh);
-
-      loadedCount++;
-      if (loadedCount === imageUrls.length) {
-        updatePositions(0, 0);
-      }
     }
+
+    // Process texture loading asynchronously to avoid main thread frame drop
+    imageUrls.forEach((url, index) => {
+      requestAnimationFrame(() => {
+        textureLoader.load(
+          url,
+          (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.generateMipmaps = false;
+            texture.minFilter = THREE.LinearFilter;
+            createCard(texture, index);
+          },
+          undefined,
+          () => {
+            createCard(getFallbackTexture(), index);
+          }
+        );
+      });
+    });
 
     let currentProgress = 0;
     let targetProgress = 0;
@@ -176,15 +176,15 @@ export default function Projects() {
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
-    const updatePositions = (progress: number, reveal: number) => {
+    const updatePositions = (progress: number, reveal: number, delta: number) => {
       const totalOffset = (progress + dragOffset) * totalTrailLength * 0.8;
+      const lerpFactor = 1 - Math.pow(0.001, delta);
 
       meshes.forEach((mesh) => {
         const index = mesh.userData.index;
-
         const rawX = index * cardSpacing - totalOffset;
 
-        let wrappedX =
+        const wrappedX =
           ((((rawX + totalTrailLength / 2) % totalTrailLength) +
             totalTrailLength) %
             totalTrailLength) -
@@ -193,30 +193,26 @@ export default function Projects() {
         const offsiteX = 28 + index * 0.35;
         const x = THREE.MathUtils.lerp(offsiteX, wrappedX, reveal);
 
-        // Preserved original curve dynamics
         const diagonalSlope = 0.48;
         const linearY = x * diagonalSlope + 0.5;
 
         const gaussianEnvelope = Math.exp(-Math.pow(x * 0.12, 2));
         const centerWave = Math.sin(x * -0.25) * 2.2 * gaussianEnvelope * reveal;
 
-        // Smoothly interpolate hover lift value for popout effect
         mesh.userData.hoverLift = THREE.MathUtils.lerp(
           mesh.userData.hoverLift,
           mesh.userData.targetHoverLift,
-          0.1
+          lerpFactor
         );
 
         const finalY = linearY + centerWave + mesh.userData.hoverLift;
-
         const proximity = Math.exp(-Math.pow(x * CONFIG.SCALE_PROXIMITY_FOCUS, 2));
 
         const targetScale = 1 + CONFIG.MAX_CENTER_SCALE * proximity * reveal;
-        const currentScale = mesh.scale.x;
         const smoothScale = THREE.MathUtils.lerp(
-          currentScale,
+          mesh.scale.x,
           targetScale,
-          CONFIG.SCALE_SMOOTHNESS
+          lerpFactor
         );
 
         const baseZ = (index % 4) * 0.08;
@@ -224,8 +220,7 @@ export default function Projects() {
         const hoverZOffset = mesh.userData.hoverLift > 0.05 ? 0.3 : 0;
         const targetZ = baseZ + centerZOffset + hoverZOffset;
 
-        const currentZ = mesh.position.z;
-        const smoothZ = THREE.MathUtils.lerp(currentZ, targetZ, CONFIG.SCALE_SMOOTHNESS);
+        const smoothZ = THREE.MathUtils.lerp(mesh.position.z, targetZ, lerpFactor);
 
         mesh.renderOrder = Math.round(proximity * 100) + (hoveredIndex === index ? 50 : 0);
 
@@ -247,7 +242,7 @@ export default function Projects() {
     };
 
     const updateHoverState = (clientX: number, clientY: number) => {
-      if (revealObj.progress < 0.9 || isDragging) return;
+      if (revealObj.progress < 0.9 || isDragging || meshes.length === 0) return;
 
       const rect = container.getBoundingClientRect();
       pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -263,16 +258,15 @@ export default function Projects() {
         if (hoveredIndex !== newHoverIndex) {
           hoveredIndex = newHoverIndex;
           meshes.forEach((m) => {
-            m.userData.targetHoverLift = m.userData.index === hoveredIndex ? CONFIG.HOVER_LIFT_AMOUNT : 0;
+            m.userData.targetHoverLift =
+              m.userData.index === hoveredIndex ? CONFIG.HOVER_LIFT_AMOUNT : 0;
           });
         }
-      } else {
-        if (hoveredIndex !== null) {
-          hoveredIndex = null;
-          meshes.forEach((m) => {
-            m.userData.targetHoverLift = 0;
-          });
-        }
+      } else if (hoveredIndex !== null) {
+        hoveredIndex = null;
+        meshes.forEach((m) => {
+          m.userData.targetHoverLift = 0;
+        });
       }
     };
 
@@ -335,12 +329,16 @@ export default function Projects() {
     container.addEventListener('pointerleave', onPointerLeave);
 
     let animationFrameId: number;
+    const clock = new THREE.Clock();
 
     const render = () => {
+      const delta = Math.min(clock.getDelta(), 0.1);
+      const lerpFactor = 1 - Math.pow(0.001, delta);
+
       currentProgress = THREE.MathUtils.lerp(
         currentProgress,
         targetProgress,
-        CONFIG.MOVEMENT_SMOOTHNESS
+        lerpFactor
       );
 
       if (!isDragging && Math.abs(dragVelocity) > 0.00001) {
@@ -348,19 +346,15 @@ export default function Projects() {
         dragVelocity *= CONFIG.DRAG_FRICTION;
       }
 
-      dragOffset = THREE.MathUtils.lerp(
-        dragOffset,
-        targetDragOffset,
-        CONFIG.MOVEMENT_SMOOTHNESS
-      );
+      dragOffset = THREE.MathUtils.lerp(dragOffset, targetDragOffset, lerpFactor);
 
-      updatePositions(currentProgress, revealObj.progress);
+      updatePositions(currentProgress, revealObj.progress, delta);
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(render);
     };
     render();
 
-    // GSAP ScrollTrigger
+    // GSAP ScrollTrigger Optimization
     const ctx = gsap.context(() => {
       const words = sectionRef.current?.querySelectorAll('.reveal-word');
       if (words && words.length > 0) {
@@ -398,7 +392,7 @@ export default function Projects() {
           onEnter: () => {
             gsap.to(revealObj, {
               progress: 1,
-              duration: 3,
+              duration: 2.5,
               ease: 'power4.out',
               onComplete: () => setHasRevealed(true),
             });
@@ -424,11 +418,11 @@ export default function Projects() {
 
     const handleResize = () => {
       if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
+      width = container.clientWidth;
+      height = container.clientHeight;
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      renderer.setSize(width, height);
     };
 
     window.addEventListener('resize', handleResize);
@@ -442,19 +436,22 @@ export default function Projects() {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
       ctx.revert();
-      if (renderer.domElement) {
+      if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
-      renderer.dispose();
+      sharedCardGeometry.dispose();
+      sharedShadowGeometry.dispose();
+      shadowMaterial.dispose();
       shadowTexture.dispose();
+      renderer.dispose();
     };
   }, [router]);
 
   return (
-    <section ref={sectionRef} className="relative h-screen w-full overflow-hidden select-none">
+    <section ref={sectionRef} className="relative w-full h-screen overflow-hidden select-none">
       {/* Background Headline with Blur Word Reveal Animation */}
-      <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none px-4">
-        <h2 className="text-4xl sm:text-6xl md:text-9xl font-sans tracking-tight text-foreground text-center">
+      <div className="absolute inset-0 z-0 flex items-center justify-center px-4 pointer-events-none">
+        <h2 className="font-sans text-4xl tracking-tight text-center sm:text-6xl md:text-9xl text-foreground">
           <span className="reveal-word inline-block mr-[0.25em] opacity-0 blur-[12px] will-change-[opacity,filter,transform]">
             Design
           </span>

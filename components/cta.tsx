@@ -44,7 +44,6 @@ const SplitText = ({
   );
 };
 
-// 120 columns matches the fine grain and shadow fidelity of the hands section
 const COLS = 110;
 const CUSTOM_RAMP = ' .:`-^~*+?s%#@$';
 const HOVER_RADIUS_CELLS = 5.0;
@@ -101,12 +100,10 @@ class AsciiCanvasHand {
       offCtx.drawImage(img, 0, 0, this.cols, this.rows);
       const pixels = offCtx.getImageData(0, 0, this.cols, this.rows).data;
 
-      // Sample top-left corner (0,0) for dynamic background removal
       const bgR = pixels[0];
       const bgG = pixels[1];
       const bgB = pixels[2];
 
-      // Extract pixel brightness & establish min/max bounds across subject
       const brightnessValues: number[] = [];
       let minB = 255;
       let maxB = 0;
@@ -119,7 +116,6 @@ class AsciiCanvasHand {
 
         const colorDiff = Math.hypot(r - bgR, g - bgG, b - bgB);
 
-        // Remove transparent and pure background pixels
         if (alpha < 20 || colorDiff < 28 || (r > 240 && g > 240 && b > 240)) {
           brightnessValues.push(-1);
         } else {
@@ -130,7 +126,6 @@ class AsciiCanvasHand {
         }
       }
 
-      // Map subject brightness across the complete character ramp spectrum
       const range = maxB - minB || 1;
       this.charGrid = [];
 
@@ -143,10 +138,7 @@ class AsciiCanvasHand {
           if (br === -1) {
             row.push(' ');
           } else {
-            // Linear stretch mapping pixel brightness to 0.0 - 1.0 range
             const normalized = (br - minB) / range;
-
-            // Invert brightness so darker areas get high-density characters (@, #, %)
             const darkness = 1.0 - normalized;
 
             const rampIndex = Math.floor(darkness * (CUSTOM_RAMP.length - 1));
@@ -171,7 +163,6 @@ class AsciiCanvasHand {
     if (!this.rows || !this.cols) return;
     const dpr = window.devicePixelRatio || 1;
 
-    // Crisp high-resolution sizing
     this.cellWidth = Math.max(
       4,
       Math.floor((window.innerWidth * 0.45) / this.cols),
@@ -187,6 +178,7 @@ class AsciiCanvasHand {
     this.canvas.style.width = `${displayWidth}px`;
     this.canvas.style.height = `${displayHeight}px`;
 
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.scale(dpr, dpr);
     this.ctx.font = `500 ${this.fontSize}px 'Courier New', monospace`;
     this.ctx.textBaseline = 'top';
@@ -418,7 +410,7 @@ export default function CTASection() {
           ref={textBlock1Ref}
           className='w-full max-w-xs px-8 mb-12 md:px-0 md:col-span-5 md:col-start-3 md:max-w-md md:mb-0'
         >
-          <p className='font-sans text-lg md:text-[22px] leading-relaxed text-justify'>
+          <p className='font-sans text-[16px] leading-relaxed text-justify'>
             <SplitText
               text='Looking for an internship or full-time opportunity. Excited to join a creative team, solve meaningful problems, and design experiences people love using.'
               playfairWords={['internship', 'or', 'full-time', 'opportunity.']}
@@ -454,7 +446,7 @@ export default function CTASection() {
           ref={textBlock2Ref}
           className='w-full max-w-xs md:col-span-4 md:col-start-8 md:max-w-sm'
         >
-          <p className='font-sans text-lg md:text-[22px] leading-relaxed text-justify'>
+          <p className='font-sans text-[16px] leading-relaxed text-justify'>
             <SplitText
               text="Currently available for internships, freelance, and collaborative projects. Let's create products that are simple thoughtful and impactful work."
               playfairWords={[

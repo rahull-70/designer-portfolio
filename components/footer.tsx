@@ -478,7 +478,7 @@ export default function Footer() {
           </div>
 
           <div className="overflow-hidden md:col-span-3 md:col-start-10">
-            <p className="footer-reveal-text text-[20px] font-sans leading-relaxed text-foreground text-justify">
+            <p className="footer-reveal-text text-[16px] font-sans leading-relaxed text-foreground text-justify">
               Designer by curiosity, developer by obsession. I like exploring ideas, building
               things, and learning something new along the way.
             </p>

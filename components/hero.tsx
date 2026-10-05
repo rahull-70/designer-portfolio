@@ -131,7 +131,7 @@ const Hero = () => {
           className="relative z-20 flex flex-col justify-between w-full px-5 pointer-events-none py-7"
         >
           {/* Top Left Paragraph */}
-          <div className="max-w-md pt-20 text-[20px] leading-snug">
+          <div className="max-w-md pt-20 text-[16px] leading-snug">
             <p className="font-sans text-justify">
               <SplitText
                 text="Crafting intuitive interfaces and thoughtful user experiences that turn complex ideas into simple, engaging products."

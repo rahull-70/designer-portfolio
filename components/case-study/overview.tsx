@@ -20,7 +20,8 @@ export default function OverviewSection({ data }: OverviewProps) {
 
   const media = data.media?.hero;
   const mediaSrc = media?.src || data.heroVideo;
-  const isVideo = media?.type === 'video' || Boolean(!media?.type && data.heroVideo);
+  const isVideo =
+    media?.type === 'video' || Boolean(!media?.type && data.heroVideo);
 
   useEffect(() => {
     if (!isVideo) return;
@@ -38,7 +39,7 @@ export default function OverviewSection({ data }: OverviewProps) {
           video.pause();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
 
     observer.observe(video);
@@ -66,45 +67,56 @@ export default function OverviewSection({ data }: OverviewProps) {
             start: 'top 80%',
             toggleActions: 'play none none reverse',
           },
-        }
+        },
       );
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
-  if (!mediaSrc) return null;
-
   return (
     <section
       ref={containerRef}
-      className="flex flex-col justify-center w-full min-h-screen py-16 mx-auto select-none"
+      className='flex flex-col justify-center w-full min-h-screen gap-16 py-16 mx-auto select-none'
     >
       {/* Geometry Center Curtain Reveal (Image or Video) */}
-      <div className="flex justify-center w-full">
-        <div
-          ref={frameRef}
-          className="w-full aspect-[16/9] rounded-xl overflow-hidden bg-[#dbdbdb] will-change-[clip-path,transform] shadow-xl"
-        >
-          {isVideo ? (
-            <video
-              ref={videoRef}
-              src={mediaSrc}
-              preload="metadata"
-              loop
-              muted
-              playsInline
-              className="w-full h-full p-8 shadow-xl md:p-20"
-            />
-          ) : (
-            <img
-              src={mediaSrc}
-              alt={`${data.name} Hero`}
-              className="w-full h-full p-8 shadow-xl md:p-20"
-            />
-          )}
+      {mediaSrc && (
+        <div className='flex justify-center w-full'>
+          <div
+            ref={frameRef}
+            className='w-full aspect-[16/9] rounded-xl overflow-hidden bg-[#dbdbdb] will-change-[clip-path,transform] shadow-xl'
+          >
+            {isVideo ? (
+              <video
+                ref={videoRef}
+                src={mediaSrc}
+                preload='metadata'
+                loop
+                muted
+                playsInline
+                className='w-full h-full p-8 shadow-xl md:p-20'
+              />
+            ) : (
+              <img
+                src={mediaSrc}
+                alt={`${data.name} Hero`}
+                className='w-full h-full p-8 shadow-xl md:p-20'
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Overview Text Block below media */}
+      {(data.overviewParagraph1 || data.overviewParagraph2) && (
+        <div className='flex items-start justify-between w-full px-40 text-[16px]'>
+          <span>Overview</span>
+          <div className='flex flex-col max-w-lg gap-4'>
+            {data.overviewParagraph1 && <p>{data.overviewParagraph1}</p>}
+            {data.overviewParagraph2 && <p>{data.overviewParagraph2}</p>}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

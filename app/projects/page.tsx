@@ -241,7 +241,7 @@ export default function OrbitGalleryPage() {
       >
         {/* Top Left Text Overlay */}
         <div className='relative z-20 max-w-full px-6 pt-4 pointer-events-none md:absolute top-20 md:top-20 md:pt-0'>
-          <h1 className='text-[16px] sm:text-[18px] md:text-[20px] leading-snug tracking-tight text-left md:text-justify'>
+          <h1 className='text-[16px] leading-snug tracking-tight text-left md:text-justify'>
             <SplitText text='Designing products that solve problems, not just screens.' />
           </h1>
         </div>
@@ -276,7 +276,7 @@ export default function OrbitGalleryPage() {
 
         {/* Bottom Right Text Overlay */}
         <div className='relative right-0 z-20 max-w-full px-6 pb-6 text-left pointer-events-none md:absolute bottom-6 md:bottom-10 md:right-5 md:pb-0 md:max-w-xs md:text-right'>
-          <p className='text-xs sm:text-sm leading-relaxed tracking-normal text-left md:text-justify max-w-full md:max-w-[270px]'>
+          <p className='text-[16px]] leading-relaxed tracking-normal text-left md:text-justify max-w-full md:max-w-[270px]'>
             <SplitText text='A curated collection of projects exploring research, strategy, interaction, and visual design—crafted with people at the center of every decision.' />
           </p>
         </div>

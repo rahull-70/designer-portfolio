@@ -180,7 +180,7 @@ export default function About() {
           href='/me'
           className='relative inline-flex mb-20 overflow-hidden transition-opacity group text-md hover:opacity-100'
         >
-          <span className='inline-flex'>
+          <span className='inline-flex'> 
             {'Info'.split('').map((char, index) => (
               <span
                 key={index}
@@ -200,11 +200,11 @@ export default function About() {
 
         <p
           ref={paragraphRef}
-          className='max-w-md text-[20px] font-sans text-justify'
+          className='max-w-md text-[16px] font-sans text-justify'
         >
           <SplitText
             text="I design clear, intuitive, and visually refined interfaces by understanding real user needs creating products that don't just look good, but make tech better to use."
-            playfairWords={['clear', 'intuitive', 'refined', 'needs']}
+            playfairWords={['clear', 'intuitive', 'refined', 'needs', ]}
           />
         </p>
       </div>

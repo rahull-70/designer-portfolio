@@ -15,18 +15,18 @@ interface PlaygroundCard {
 }
 
 const CARDS: PlaygroundCard[] = [
-  { id: 1, videoUrl: '/playground-videos/component-1.mp4', alt: 'Experiment 01' },
-  { id: 2, videoUrl: '/playground-videos/component-2.mp4', alt: 'Experiment 02' },
-  { id: 3, videoUrl: '/playground-videos/component-3.mp4', alt: 'Experiment 03' },
-  { id: 4, videoUrl: '/playground-videos/component-4.mp4', alt: 'Experiment 04' },
-  { id: 5, videoUrl: '/playground-videos/component-5.mp4', alt: 'Experiment 05' },
-  { id: 6, videoUrl: '/playground-videos/component-6.mp4', alt: 'Experiment 06' },
-  { id: 7, videoUrl: '/playground-videos/component-7.mp4', alt: 'Experiment 07' },
-  { id: 8, videoUrl: '/playground-videos/component-8.mp4', alt: 'Experiment 08' },
-  { id: 9, videoUrl: '/playground-videos/component-9.mp4', alt: 'Experiment 09' },
-  { id: 10, videoUrl: '/playground-videos/component-10.mp4', alt: 'Experiment 10' },
-  { id: 11, videoUrl: '/playground-videos/component-11.mp4', alt: 'Experiment 11' },
-  { id: 12, videoUrl: '/playground-videos/component-12.mp4', alt: 'Experiment 12' },
+  { id: 1, videoUrl: '/playground-videos/component-1.webm', alt: 'Experiment 01' },
+  { id: 2, videoUrl: '/playground-videos/component-2.webm', alt: 'Experiment 02' },
+  { id: 3, videoUrl: '/playground-videos/component-3.webm', alt: 'Experiment 03' },
+  { id: 4, videoUrl: '/playground-videos/component-4.webm', alt: 'Experiment 04' },
+  { id: 5, videoUrl: '/playground-videos/component-5.webm', alt: 'Experiment 05' },
+  { id: 6, videoUrl: '/playground-videos/component-6.webm', alt: 'Experiment 06' },
+  { id: 7, videoUrl: '/playground-videos/component-7.webm', alt: 'Experiment 07' },
+  { id: 8, videoUrl: '/playground-videos/component-8.webm', alt: 'Experiment 08' },
+  { id: 9, videoUrl: '/playground-videos/component-9.webm', alt: 'Experiment 09' },
+  { id: 10, videoUrl: '/playground-videos/component-10.webm', alt: 'Experiment 10' },
+  { id: 11, videoUrl: '/playground-videos/component-11.webm', alt: 'Experiment 11' },
+  { id: 12, videoUrl: '/playground-videos/component-12.webm', alt: 'Experiment 12' },
 ];
 
 function MediaCardItem({ item }: { item: PlaygroundCard }) {
@@ -175,7 +175,7 @@ export default function PlaygroundPage() {
 
       <main className="flex-grow w-full px-5 pb-20 pt-28">
         <div className="max-w-xl pb-12 sm:pb-16">
-          <h1 className="text-base sm:text-[20px] leading-snug font-sans">
+          <h1 className="font-sans leading-snug text-[16px]">
             <SplitText
               text="A collection of ideas, experiments, and components—where curiosity turns into interfaces."
               serifWords={['ideas', 'experiments', 'components']}

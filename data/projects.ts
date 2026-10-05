@@ -25,7 +25,10 @@ export interface ProjectData {
   overviewParagraph2: string;
   challengesParagraph1: string;
   challengesParagraph2: string;
-  research: string;
+  research?: string;
+  researchParagraph1: string;
+  researchParagraph2: string;
+  researchParagraph3: string;
   solution: string;
   systemDesign: {
     fonts: FontSpec[];
@@ -49,15 +52,20 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     name: 'Slash UI',
     heroFontClass: 'font-hoshiko',
     overviewParagraph1:
-      'Slash UI is a modern component library designed to make interfaces faster, clearer, and more consistent.',
+      'Slash UI is a modern component library created to explore a more flexible way of building digital interfaces. It brings reusable components, visual foundations, interaction patterns, and motion into one system, helping designers and developers create polished experiences without rebuilding the same foundations every time.',
     overviewParagraph2:
-      'From reusable components to motion-ready patterns, Slash UI brings the essentials together in one flexible system.',
+      'The idea was to create more than a collection of components. I wanted Slash UI to provide a strong foundation while still giving each interface room to have its own personality through visual direction, interaction, and motion.',
+
     challengesParagraph1:
-      'Building interfaces from scratch can quickly become repetitive.',
+      'Many interfaces rely on the same basic building blocks, but creating more expressive experiences often means designing interactions, transitions, and animations separately. This can make the process repetitive and lead to inconsistencies across projects.',
     challengesParagraph2:
-      'Components get rebuilt, styles drift, and small inconsistencies start to appear across different interfaces.',
-    research:
-      'Slash UI brings reusable components, clear visual rules, and flexible patterns into one system.',
+      'At the same time, a system can become too restrictive if every component follows the same visual language. The challenge was to find a balance between consistency and freedom—making the repetitive parts easier to build without limiting creativity.',
+    researchParagraph1:
+      'I explored existing component libraries and common interface patterns to understand how reusable systems are structured and where they can become limiting for more interactive experiences.',
+    researchParagraph2:
+      'This led me to focus on three ideas: consistency, flexibility, and interaction. Components needed to be reusable, but also adaptable. Visual foundations such as typography, colour, spacing, and grid needed to work together, while motion and interaction needed to feel like part of the system rather than something added afterwards.',
+    researchParagraph3:
+      'The goal was to understand how these elements could work together as one flexible foundation.',
     solution:
       'I wanted to create a system that could keep interfaces consistent without making them feel restricted.',
     systemDesign: {
@@ -85,23 +93,23 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     media: {
       hero: {
         type: 'video',
-        src: '/project/slashui/slash-video.mp4',
+        src: '/project/slashui/slash-video.webm',
       },
       challengesLeft: {
         type: 'video',
-        src: '/project/slashui/slash-video-2.mp4',
+        src: '/project/slashui/slash-video-2.webm',
       },
       challengesRight: {
         type: 'video',
-        src: '/project/slashui/slash-video-3.mp4',
+        src: '/project/slashui/slash-video-3.webm',
       },
       research: {
         type: 'video',
-        src: '/project/slashui/slash-video-4.mp4',
+        src: '/project/slashui/slash-video-4.webm',
       },
       solutionVideo: {
         type: 'video',
-        src: '/project/slashui/slash-video-5.mp4',
+        src: '/project/slashui/slash-video-5.webm',
       },
       showcase1: {
         type: 'image',
@@ -117,6 +125,7 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
       },
     },
   },
+
   '11revens': {
     id: '11revens',
     name: '11Revens',
@@ -125,7 +134,9 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     overviewParagraph2: '',
     challengesParagraph1: '',
     challengesParagraph2: '',
-    research: '',
+    researchParagraph1: '',
+    researchParagraph2: '',
+    researchParagraph3: '',
     solution:
       'I wanted to bring the attitude of streetwear editorials into an ecommerce experience without losing clarity.”',
     systemDesign: {
@@ -189,7 +200,7 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
       },
     },
   },
-  questsboard: {
+  'questsboard': {
     id: 'questsboard',
     name: 'QuestsBoard',
     heroFontClass: 'font-oi',
@@ -197,7 +208,9 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     overviewParagraph2: '',
     challengesParagraph1: '',
     challengesParagraph2: '',
-    research: '',
+    researchParagraph1: '',
+    researchParagraph2: '',
+    researchParagraph3: '',
     solution:
       'I wanted to turn everyday tasks into something that feels more engaging without making productivity feel complicated.',
     systemDesign: {
@@ -281,7 +294,7 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
       },
     },
   },
-  karma: {
+  'karma': {
     id: 'karma',
     name: 'Karma',
     heroFontClass: 'font-bebas-neue',
@@ -289,8 +302,11 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     overviewParagraph2: '',
     challengesParagraph1: '',
     challengesParagraph2: '',
-    research: '',
-    solution: '',
+    researchParagraph1: '',
+    researchParagraph2: '',
+    researchParagraph3: '',
+    solution:
+      'I wanted to create a digital space where Karma’s music and visual identity could feel like one experience.',
     systemDesign: {
       fonts: [
         { name: 'Bebas-Neue', sample: 'Aa', className: 'font-bebas-neue' },
@@ -320,23 +336,23 @@ export const PROJECTS_DATA: Record<string, ProjectData> = {
     media: {
       hero: {
         type: 'video',
-        src: '/project/karma/karma-video-1.mp4',
+        src: '/project/karma/karma-video-1.webm',
       },
       challengesLeft: {
         type: 'video',
-        src: '/project/karma/karma-video-2.mp4',
+        src: '/project/karma/karma-video-2.webm',
       },
       challengesRight: {
         type: 'video',
-        src: '/project/karma/karma-video-3.mp4',
+        src: '/project/karma/karma-video-3.webm',
       },
       research: {
         type: 'video',
-        src: '/project/karma/karma-video-4.mp4',
+        src: '/project/karma/karma-video-4.webm',
       },
       solutionVideo: {
         type: 'video',
-        src: '/project/karma/karma-video-5.mp4',
+        src: '/project/karma/karma-video-5.webm',
       },
       showcase1: {
         type: 'image',

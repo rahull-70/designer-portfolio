@@ -8,18 +8,18 @@ import gsap from 'gsap';
 // ============================================================================
 
 const PLAYGROUND_ITEMS = [
-  { id: 1, label: '01', videoUrl: '/playground-videos/component-1.mp4' },
-  { id: 2, label: '02', videoUrl: '/playground-videos/component-2.mp4' },
-  { id: 3, label: '03', videoUrl: '/playground-videos/component-3.mp4' },
-  { id: 4, label: '04', videoUrl: '/playground-videos/component-4.mp4' },
-  { id: 5, label: '05', videoUrl: '/playground-videos/component-5.mp4' },
-  { id: 6, label: '06', videoUrl: '/playground-videos/component-6.mp4' },
-  { id: 7, label: '07', videoUrl: '/playground-videos/component-7.mp4' },
-  { id: 8, label: '08', videoUrl: '/playground-videos/component-8.mp4' },
-  { id: 9, label: '09', videoUrl: '/playground-videos/component-9.mp4' },
-  { id: 10, label: '10', videoUrl: '/playground-videos/component-10.mp4' },
-  { id: 11, label: '11', videoUrl: '/playground-videos/component-11.mp4' },
-  { id: 12, label: '12', videoUrl: '/playground-videos/component-12.mp4' },
+  { id: 1, label: '01', videoUrl: '/playground-videos/component-1.webm' },
+  { id: 2, label: '02', videoUrl: '/playground-videos/component-2.webm' },
+  { id: 3, label: '03', videoUrl: '/playground-videos/component-3.webm' },
+  { id: 4, label: '04', videoUrl: '/playground-videos/component-4.webm' },
+  { id: 5, label: '05', videoUrl: '/playground-videos/component-5.webm' },
+  { id: 6, label: '06', videoUrl: '/playground-videos/component-6.webm' },
+  { id: 7, label: '07', videoUrl: '/playground-videos/component-7.webm' },
+  { id: 8, label: '08', videoUrl: '/playground-videos/component-8.webm' },
+  { id: 9, label: '09', videoUrl: '/playground-videos/component-9.webm' },
+  { id: 10, label: '10', videoUrl: '/playground-videos/component-10.webm' },
+  { id: 11, label: '11', videoUrl: '/playground-videos/component-11.webm' },
+  { id: 12, label: '12', videoUrl: '/playground-videos/component-12.webm' },
 ];
 
 // ============================================================================
@@ -27,13 +27,7 @@ const PLAYGROUND_ITEMS = [
 // ============================================================================
 
 const VideoCard = memo(
-  ({
-    isHovered,
-    videoUrl,
-  }: {
-    isHovered: boolean;
-    videoUrl: string;
-  }) => {
+  ({ isHovered, videoUrl }: { isHovered: boolean; videoUrl: string }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -62,13 +56,13 @@ const VideoCard = memo(
             loop
             muted
             playsInline
-            preload="metadata"
-            className="object-cover w-full h-full"
+            preload='none'
+            className='object-cover w-full h-full'
           />
         )}
       </div>
     );
-  }
+  },
 );
 
 VideoCard.displayName = 'VideoCard';
@@ -99,13 +93,13 @@ export default function Playground() {
         .fromTo(
           dotCircleRef.current,
           { scale: 0, opacity: 0 },
-          { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(2)' }
+          { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(2)' },
         )
         .fromTo(
           dotTextRef.current,
           { y: 8, opacity: 0 },
           { y: 0, opacity: 0.7, duration: 0.5, ease: 'power2.out' },
-          '-=0.3'
+          '-=0.3',
         );
 
       gsap.to(pingRingRef.current, {
@@ -158,33 +152,33 @@ export default function Playground() {
             amount: 0.35,
           },
         },
-        '-=0.1'
+        '-=0.1',
       );
     }
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center w-full min-h-screen p-8 overflow-hidden font-sans select-none text-foreground md:p-16">
+    <section className='relative flex flex-col items-center justify-center w-full min-h-screen p-8 overflow-hidden font-sans select-none text-foreground md:p-16'>
       {/* Central Starter Dot (Shown before reveal) */}
       {!isRevealed && (
         <button
           ref={initialDotRef}
           onClick={handleReveal}
-          className="absolute z-50 flex flex-col items-center justify-center outline-none cursor-pointer group"
+          className='absolute z-50 flex flex-col items-center justify-center outline-none cursor-pointer group'
         >
-          <div className="relative flex items-center justify-center">
+          <div className='relative flex items-center justify-center'>
             <div
               ref={pingRingRef}
-              className="absolute w-4 h-4 border rounded-full pointer-events-none border-foreground/40"
+              className='absolute w-4 h-4 border rounded-full pointer-events-none border-foreground/40'
             />
             <div
               ref={dotCircleRef}
-              className="w-4 h-4 transition-transform duration-300 rounded-full shadow-md bg-foreground group-hover:scale-150"
+              className='w-4 h-4 transition-transform duration-300 rounded-full shadow-md bg-foreground group-hover:scale-150'
             />
           </div>
           <span
             ref={dotTextRef}
-            className="mt-3 text-[10px] font-sans tracking-widest text-zinc-500 group-hover:opacity-100 transition-opacity"
+            className='mt-3 text-[10px] font-sans tracking-widest text-zinc-500 group-hover:opacity-100 transition-opacity'
           >
             Click to reveal
           </span>
@@ -194,7 +188,7 @@ export default function Playground() {
       {/* Grid Container */}
       <div
         ref={gridContainerRef}
-        className="grid w-full max-w-6xl grid-cols-2 py-12 mx-auto sm:grid-cols-4 gap-y-28 gap-x-16 md:gap-y-40 md:gap-x-24 place-items-center"
+        className='grid w-full max-w-6xl grid-cols-2 py-12 mx-auto sm:grid-cols-4 gap-y-28 gap-x-16 md:gap-y-40 md:gap-x-24 place-items-center'
       >
         {PLAYGROUND_ITEMS.map((item) => {
           const isHovered = activeItem === item.id;
@@ -209,11 +203,11 @@ export default function Playground() {
               onMouseLeave={() => isRevealed && setActiveItem(null)}
             >
               {/* Number and Dot Trigger */}
-              <div className="z-10 inline-flex items-center gap-2 cursor-pointer">
-                <span className="font-mono text-xs font-normal transition-colors duration-200 text-zinc-600 group-hover:text-foreground">
+              <div className='z-10 inline-flex items-center gap-2 cursor-pointer'>
+                <span className='font-mono text-xs font-normal transition-colors duration-200 text-zinc-600 group-hover:text-foreground'>
                   {item.label}
                 </span>
-                <div className="w-2.5 h-2.5 rounded-full bg-foreground transition-transform duration-200 group-hover:scale-125" />
+                <div className='w-2.5 h-2.5 rounded-full bg-foreground transition-transform duration-200 group-hover:scale-125' />
               </div>
 
               {/* Lazy-Loaded Hover Popup Video Player Card */}

@@ -29,7 +29,7 @@ function MediaItem({ media, alt }: { media?: MediaSpec; alt: string }) {
           video.pause();
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
 
     observer.observe(video);
@@ -49,13 +49,13 @@ function MediaItem({ media, alt }: { media?: MediaSpec; alt: string }) {
           loop
           muted
           playsInline
-          className='w-full h-full object-cover rounded-xl shadow-xl'
+          className='object-cover w-full h-full shadow-xl rounded-xl'
         />
       ) : (
         <img
           src={media.src}
           alt={alt}
-          className='w-full h-full rounded-xl shadow-xl'
+          className='w-full h-full shadow-xl rounded-xl'
         />
       )}
     </div>
@@ -97,10 +97,10 @@ export default function ResearchSection({ data }: { data: ProjectData }) {
   return (
     <section
       ref={containerRef}
-      className='w-full min-h-screen mx-auto py-16 flex flex-col justify-center select-none'
+      className='flex flex-col justify-center w-full min-h-screen py-16 mx-auto select-none'
     >
       {/* Wide Left-Aligned Media Frame (Center Curtain Reveal - Video & Image Support) */}
-      <div className='w-full flex justify-start'>
+      <div className='flex justify-start w-full py-20'>
         <div
           ref={frameRef}
           className='w-full md:w-[65%] aspect-[16/9] will-change-[clip-path,transform]'
@@ -108,6 +108,19 @@ export default function ResearchSection({ data }: { data: ProjectData }) {
           <MediaItem media={media} alt={`${data.name} Research Visual`} />
         </div>
       </div>
+
+      {(data.researchParagraph1 ||
+        data.researchParagraph2 ||
+        data.researchParagraph3) && (
+        <div className='flex items-start justify-between px-40 justw-full'>
+          <span>Research</span>
+          <div className='flex flex-col max-w-lg gap-4'>
+            {data.researchParagraph1 && <p>{data.researchParagraph1}</p>}
+            {data.researchParagraph2 && <p>{data.researchParagraph2}</p>}
+            {data.researchParagraph3 && <p>{data.researchParagraph3}</p>}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

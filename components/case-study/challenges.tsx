@@ -40,7 +40,7 @@ function MediaItem({ media, alt }: { media?: MediaSpec; alt: string }) {
   if (!media?.src) return null;
 
   return (
-    <div className='w-full h-full rounded-xl overflow-hidden shadow-xl'>
+    <div className='w-full h-full overflow-hidden shadow-xl rounded-xl'>
       {isVideo ? (
         <video
           ref={videoRef}
@@ -49,7 +49,7 @@ function MediaItem({ media, alt }: { media?: MediaSpec; alt: string }) {
           loop
           muted
           playsInline
-          className='w-full h-full object-cover'
+          className='object-cover w-full h-full'
         />
       ) : (
         <img
@@ -104,10 +104,10 @@ export default function ChallengesSection({ data }: { data: ProjectData }) {
   return (
     <section
       ref={containerRef}
-      className='w-full min-h-screen mx-auto py-16 flex flex-col justify-center select-none'
+      className='flex flex-col justify-center w-full min-h-screen py-16 mx-auto select-none'
     >
       {/* Asymmetric Media Layout (Center Curtain Reveal - Video & Image Support) */}
-      <div className='w-full grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start'>
+      <div className='grid items-start w-full grid-cols-1 gap-8 py-20 lg:grid-cols-12 md:gap-12'>
         <div
           ref={leftFrameRef}
           className='lg:col-span-8 aspect-[16/9] p-8 md:p-20 bg-[#dbdbdb] rounded-2xl will-change-[clip-path,transform]'
@@ -121,6 +121,16 @@ export default function ChallengesSection({ data }: { data: ProjectData }) {
           <MediaItem media={media2} alt={`${data.name} Challenge Visual 2`} />
         </div>
       </div>
+
+       {(data.challengesParagraph1 || data.challengesParagraph2) && (
+        <div className='flex items-start justify-between px-40 justw-full'>
+          <span>Challenges</span>
+          <div className='flex flex-col max-w-lg gap-4'>
+            {data.challengesParagraph1 && <p>{data.challengesParagraph1}</p>}
+            {data.challengesParagraph2 && <p>{data.challengesParagraph2}</p>}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
