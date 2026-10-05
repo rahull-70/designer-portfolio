@@ -85,12 +85,13 @@ export default function Projects() {
     const textureLoader = new THREE.TextureLoader();
     const meshes: THREE.Mesh[] = [];
     const shadowMeshes: THREE.Mesh[] = [];
+    const loadedTextures: THREE.Texture[] = [shadowTexture];
 
     const cardSpacing = 3.6;
     const totalCards = imageUrls.length;
     const totalTrailLength = totalCards * cardSpacing;
 
-    // Shared geometries to minimize memory footprint & GPU draw calls
+    // Shared geometries
     const sharedCardGeometry = new THREE.PlaneGeometry(5.2, 5.2 / (16 / 9));
     const sharedShadowGeometry = new THREE.PlaneGeometry(6.0, 6.0 / (16 / 9));
 
@@ -101,7 +102,6 @@ export default function Projects() {
       opacity: 0.35,
     });
 
-    // Lazy load fallback canvas
     let cachedFallbackTexture: THREE.CanvasTexture | null = null;
     const getFallbackTexture = () => {
       if (cachedFallbackTexture) return cachedFallbackTexture;
@@ -117,6 +117,7 @@ export default function Projects() {
         ctx.fillRect(0, 0, 256, 160);
       }
       cachedFallbackTexture = new THREE.CanvasTexture(canvas);
+      loadedTextures.push(cachedFallbackTexture);
       return cachedFallbackTexture;
     };
 
@@ -141,23 +142,21 @@ export default function Projects() {
       shadowMeshes.push(shadowMesh);
     }
 
-    // Process texture loading asynchronously to avoid main thread frame drop
     imageUrls.forEach((url, index) => {
-      requestAnimationFrame(() => {
-        textureLoader.load(
-          url,
-          (texture) => {
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.generateMipmaps = false;
-            texture.minFilter = THREE.LinearFilter;
-            createCard(texture, index);
-          },
-          undefined,
-          () => {
-            createCard(getFallbackTexture(), index);
-          }
-        );
-      });
+      textureLoader.load(
+        url,
+        (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.generateMipmaps = false;
+          texture.minFilter = THREE.LinearFilter;
+          loadedTextures.push(texture);
+          createCard(texture, index);
+        },
+        undefined,
+        () => {
+          createCard(getFallbackTexture(), index);
+        }
+      );
     });
 
     let currentProgress = 0;
@@ -242,7 +241,7 @@ export default function Projects() {
     };
 
     const updateHoverState = (clientX: number, clientY: number) => {
-      if (revealObj.progress < 0.9 || isDragging || meshes.length === 0) return;
+      if (revealObj.progress < 0.5 || isDragging || meshes.length === 0) return;
 
       const rect = container.getBoundingClientRect();
       pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
@@ -271,14 +270,13 @@ export default function Projects() {
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      if (revealObj.progress < 0.9) return;
+      if (revealObj.progress < 0.5) return;
       isDragging = true;
       pointerDownX = e.clientX;
       pointerDownY = e.clientY;
       lastX = e.clientX;
       dragVelocity = 0;
       setIsGrabbing(true);
-      (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
     };
 
     const onPointerMove = (e: PointerEvent) => {
@@ -298,7 +296,6 @@ export default function Projects() {
       if (!isDragging) return;
       isDragging = false;
       setIsGrabbing(false);
-      (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
 
       const distMoved = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
       if (distMoved < 6) {
@@ -316,6 +313,8 @@ export default function Projects() {
     };
 
     const onPointerLeave = () => {
+      isDragging = false;
+      setIsGrabbing(false);
       hoveredIndex = null;
       meshes.forEach((m) => {
         m.userData.targetHoverLift = 0;
@@ -354,22 +353,21 @@ export default function Projects() {
     };
     render();
 
-    // GSAP ScrollTrigger Optimization
+    // ========================================================================
+    // GSAP SCROLL TRIGGER (FIXED - NO PINNING, NO STUCKING)
+    // ========================================================================
     const ctx = gsap.context(() => {
+      // 1. Text blur reveal - fires when section enters view
       const words = sectionRef.current?.querySelectorAll('.reveal-word');
       if (words && words.length > 0) {
         gsap.fromTo(
           words,
-          {
-            opacity: 0,
-            filter: 'blur(12px)',
-            y: 16,
-          },
+          { opacity: 0, filter: 'blur(12px)', y: 16 },
           {
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: 'top top',
-              end: '+=150%',
+              start: 'top 80%',
+              end: 'top 30%',
               scrub: 1.2,
             },
             opacity: 1,
@@ -381,37 +379,32 @@ export default function Projects() {
         );
       }
 
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: 'top top',
-          end: '+=350%',
-          pin: true,
-          scrub: 1.2,
-          anticipatePin: 1,
-          onEnter: () => {
-            gsap.to(revealObj, {
-              progress: 1,
-              duration: 2.5,
-              ease: 'power4.out',
-              onComplete: () => setHasRevealed(true),
-            });
-          },
-          onLeaveBack: () => {
-            gsap.to(revealObj, {
-              progress: 0,
-              duration: 0.4,
-              ease: 'power3.in',
-              onComplete: () => setHasRevealed(false),
-            });
-          },
-          onUpdate: (self) => {
-            if (self.progress > 0.05) {
-              targetProgress = (self.progress - 0.05) / 0.95;
-            } else {
-              targetProgress = 0;
-            }
-          },
+      // 2. One-shot card reveal - fires when section is well into view
+      let hasTriggered = false;
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top 70%',
+        once: true,
+        onEnter: () => {
+          if (hasTriggered) return;
+          hasTriggered = true;
+          gsap.to(revealObj, {
+            progress: 1,
+            duration: 1.8,
+            ease: 'power3.out',
+            onComplete: () => setHasRevealed(true),
+          });
+        },
+      });
+
+      // 3. Natural scroll-linked card progress (no pin)
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1.2,
+        onUpdate: (self) => {
+          targetProgress = THREE.MathUtils.clamp(self.progress, 0, 1);
         },
       });
     }, sectionRef);
@@ -436,20 +429,32 @@ export default function Projects() {
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
       ctx.revert();
+
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+
+      meshes.forEach((mesh) => {
+        if (mesh.material instanceof THREE.Material) {
+          mesh.material.dispose();
+        }
+      });
+
+      loadedTextures.forEach((t) => t.dispose());
       sharedCardGeometry.dispose();
       sharedShadowGeometry.dispose();
       shadowMaterial.dispose();
-      shadowTexture.dispose();
       renderer.dispose();
     };
   }, [router]);
 
   return (
-    <section ref={sectionRef} className="relative w-full h-screen overflow-hidden select-none">
-      {/* Background Headline with Blur Word Reveal Animation */}
+    <section
+      ref={sectionRef}
+      className="relative w-full h-screen overflow-hidden select-none"
+      style={{ touchAction: 'pan-y' }}
+    >
+      {/* Background Headline */}
       <div className="absolute inset-0 z-0 flex items-center justify-center px-4 pointer-events-none">
         <h2 className="font-sans text-4xl tracking-tight text-center sm:text-6xl md:text-9xl text-foreground">
           <span className="reveal-word inline-block mr-[0.25em] opacity-0 blur-[12px] will-change-[opacity,filter,transform]">
@@ -473,7 +478,7 @@ export default function Projects() {
       {/* Interactive Canvas Container */}
       <div
         ref={canvasContainerRef}
-        className={`absolute inset-0 z-10 touch-none ${
+        className={`absolute inset-0 z-10 ${
           hasRevealed ? (isGrabbing ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
         }`}
       />

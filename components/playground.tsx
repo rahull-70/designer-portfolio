@@ -2,6 +2,11 @@
 
 import React, { useState, useRef, useEffect, memo } from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 // ============================================================================
 // 🎨 PLAYGROUND DATA CONFIG (12 ITEMS WITH VIDEO PLAYERS)
@@ -32,9 +37,7 @@ const VideoCard = memo(
 
     useEffect(() => {
       if (isHovered && videoRef.current) {
-        videoRef.current.play().catch(() => {
-          // Fallback handling for browser autoplay policies
-        });
+        videoRef.current.play().catch(() => {});
       } else if (!isHovered && videoRef.current) {
         videoRef.current.pause();
       }
@@ -76,6 +79,7 @@ export default function Playground() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const sectionRef = useRef<HTMLElement>(null);
   const initialDotRef = useRef<HTMLButtonElement>(null);
   const dotCircleRef = useRef<HTMLDivElement>(null);
   const dotTextRef = useRef<HTMLSpanElement>(null);
@@ -109,7 +113,7 @@ export default function Playground() {
         repeat: -1,
         ease: 'power2.out',
       });
-    }, initialDotRef);
+    }, sectionRef);
 
     return () => ctx.revert();
   }, [isRevealed]);
@@ -122,6 +126,10 @@ export default function Playground() {
       onComplete: () => {
         setIsRevealed(true);
         setIsAnimating(false);
+        // Refresh ScrollTrigger so Lenis gets the correct dynamic height after expansion
+        requestAnimationFrame(() => {
+          ScrollTrigger.refresh();
+        });
       },
     });
 
@@ -158,7 +166,11 @@ export default function Playground() {
   };
 
   return (
-    <section className='relative flex flex-col items-center justify-center w-full min-h-screen p-8 overflow-hidden font-sans select-none text-foreground md:p-16'>
+    <section
+      ref={sectionRef}
+      className='relative flex flex-col items-center justify-center w-full min-h-screen p-8 font-sans select-none text-foreground md:p-16'
+      style={{ touchAction: 'pan-y' }}
+    >
       {/* Central Starter Dot (Shown before reveal) */}
       {!isRevealed && (
         <button

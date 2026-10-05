@@ -69,6 +69,7 @@ class AsciiCanvasHand {
   fontSize: number = 11;
   cellWidth: number = 6;
   cellHeight: number = 11;
+  isVisible: boolean = false; // New flag to prevent rendering off-screen
 
   constructor(canvas: HTMLCanvasElement, imagePath: string) {
     this.canvas = canvas;
@@ -185,7 +186,7 @@ class AsciiCanvasHand {
   }
 
   triggerProximity(mouseX: number, mouseY: number) {
-    if (!this.isLoaded) return;
+    if (!this.isLoaded || !this.isVisible) return;
     const rect = this.canvas.getBoundingClientRect();
     const relX = mouseX - rect.left;
     const relY = mouseY - rect.top;
@@ -238,7 +239,7 @@ class AsciiCanvasHand {
   }
 
   render() {
-    if (!this.isLoaded) return;
+    if (!this.isLoaded || !this.isVisible) return;
     const now = performance.now();
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -294,8 +295,10 @@ export default function CTASection() {
   useEffect(() => {
     const canvas1 = canvas1Ref.current;
     const canvas2 = canvas2Ref.current;
+    const wrap1 = canvasWrap1Ref.current;
+    const wrap2 = canvasWrap2Ref.current;
 
-    if (!canvas1 || !canvas2) return;
+    if (!canvas1 || !canvas2 || !wrap1 || !wrap2) return;
 
     const asciiInstance1 = new AsciiCanvasHand(canvas1, '/img-1.png');
     const asciiInstance2 = new AsciiCanvasHand(canvas2, '/img-2.png');
@@ -305,6 +308,19 @@ export default function CTASection() {
 
     let animationFrameId: number;
     const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+
+    // Only process when visible (fixes scroll stutter)
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === wrap1) asciiInstance1.isVisible = entry.isIntersecting;
+          if (entry.target === wrap2) asciiInstance2.isVisible = entry.isIntersecting;
+        });
+      },
+      { rootMargin: '200px' }
+    );
+    visibilityObserver.observe(wrap1);
+    visibilityObserver.observe(wrap2);
 
     const handleMouseMove = (e: MouseEvent) => {
       mouse.targetX =
@@ -346,7 +362,11 @@ export default function CTASection() {
     };
     renderLoop();
 
+    // ========================================================================
+    // FIXED GSAP ANIMATIONS - One-shot reveals instead of scrub
+    // ========================================================================
     const ctx = gsap.context(() => {
+      // Text reveals - fire once, don't reverse
       [textBlock1Ref.current, textBlock2Ref.current].forEach((block) => {
         if (!block) return;
         const words = block.querySelectorAll('.reveal-word');
@@ -358,19 +378,19 @@ export default function CTASection() {
               opacity: 1,
               y: 0,
               stagger: 0.03,
-              duration: 0.4,
-              ease: 'power1.out',
+              duration: 0.6,
+              ease: 'power2.out',
               scrollTrigger: {
                 trigger: block,
                 start: 'top 85%',
-                end: 'top 30%',
-                scrub: 1,
+                toggleActions: 'play none none none', // Play once, never reverse
               },
             },
           );
         }
       });
 
+      // Canvas wrap reveals - fire once, don't reverse
       [canvasWrap1Ref.current, canvasWrap2Ref.current].forEach((wrap) => {
         if (!wrap) return;
         gsap.fromTo(
@@ -379,12 +399,12 @@ export default function CTASection() {
           {
             opacity: 1,
             scale: 1,
+            duration: 1,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: wrap,
               start: 'top 85%',
-              end: 'top 40%',
-              scrub: 1,
+              toggleActions: 'play none none none',
             },
           },
         );
@@ -394,6 +414,7 @@ export default function CTASection() {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      visibilityObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
       ctx.revert();
     };
@@ -403,6 +424,7 @@ export default function CTASection() {
     <div
       ref={containerRef}
       className='relative w-full select-none bg-background text-foreground'
+      style={{ touchAction: 'pan-y' }}
     >
       {/* SECTION 1: Top CTA */}
       <section className='relative flex flex-col items-center w-full min-h-screen py-20 overflow-hidden md:grid md:grid-cols-12'>
