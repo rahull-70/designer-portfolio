@@ -41,7 +41,7 @@ const Page = () => {
       <About />
       <Projects />
       <Playground />
-      <CTASection />
+      {/* <CTASection /> */}
       <Footer />
     </main>
   );
