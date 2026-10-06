@@ -11,7 +11,6 @@ const navItems = [
   { name: 'CONTACT', href: '/contact' },
 ];
 
-const SCRAMBLE_CHARS = '/\\<>[]{}*#+$%';
 const COLS = 110;
 const CUSTOM_RAMP = ' .:`-^~*+?s%#@$';
 const HOVER_RADIUS_CELLS = 5.0;
@@ -220,65 +219,13 @@ class AsciiCanvasHand {
   }
 }
 
-const AnimatedLogo = () => {
-  const slashRef = useRef<HTMLSpanElement>(null);
-  const isAnimating = useRef(false);
-
-  const handleHover = () => {
-    if (isAnimating.current || !slashRef.current) return;
-    isAnimating.current = true;
-
-    const el = slashRef.current;
-    let frame = 0;
-    const maxFrames = 12;
-
-    const interval = setInterval(() => {
-      frame++;
-      if (frame < maxFrames) {
-        el.textContent =
-          SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-      } else {
-        clearInterval(interval);
-        el.textContent = '/';
-      }
-    }, 30);
-
-    gsap.fromTo(
-      el,
-      { rotateY: 0, rotateZ: 0, scale: 1 },
-      {
-        rotateY: 360,
-        rotateZ: 12,
-        scale: 1.3,
-        duration: 0.8,
-        ease: 'elastic.out(1.2, 0.4)',
-        onComplete: () => {
-          gsap.to(el, {
-            rotateZ: 0,
-            scale: 1,
-            duration: 0.3,
-            ease: 'power2.out',
-            onComplete: () => {
-              isAnimating.current = false;
-            },
-          });
-        },
-      }
-    );
-  };
-
+const StaticLogo = () => {
   return (
     <TransitionLink
       href="/"
-      className="group relative inline-flex items-center justify-center [perspective:1000px]"
-      onMouseEnter={handleHover}
+      className="inline-flex items-center py-1 font-bold text-[16px] font-sans capitalize"
     >
-      <span
-        ref={slashRef}
-        className="inline-block font-bold text-[16px] leading-none tracking-tighter text-foreground will-change-transform select-none"
-      >
-        /
-      </span>
+      Rahul Parihar
     </TransitionLink>
   );
 };
@@ -354,7 +301,6 @@ const Nav = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const linksRef = useRef<HTMLDivElement>(null);
 
-  // ASCII Canvas References inside curtain menu
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const leftHandWrapRef = useRef<HTMLDivElement>(null);
@@ -369,7 +315,6 @@ const Nav = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Initialize ASCII Hands when curtain drawer opens
   useEffect(() => {
     if (!isOpen || !leftCanvasRef.current || !rightCanvasRef.current) return;
 
@@ -437,7 +382,6 @@ const Nav = () => {
     };
   }, [isOpen]);
 
-  // GSAP Curtain Toggle & Hand Slide-In Animations
   useEffect(() => {
     if (!menuRef.current) return;
 
@@ -462,7 +406,6 @@ const Nav = () => {
           },
           '-=0.2'
         )
-        /* Slide Left Hand in from Offscreen Left (-100%) */
         .fromTo(
           leftHandWrapRef.current,
           { xPercent: -100 },
@@ -473,7 +416,6 @@ const Nav = () => {
           },
           '-=0.5'
         )
-        /* Slide Right Hand in from Offscreen Right (100%) */
         .fromTo(
           rightHandWrapRef.current,
           { xPercent: 100 },
@@ -499,7 +441,7 @@ const Nav = () => {
     <>
       <header className="relative z-[100] flex items-center justify-between px-5 py-2">
         <div className="flex items-center gap-1 font-bold text-[11px] tracking-tighter uppercase">
-          <AnimatedLogo />
+          <StaticLogo />
         </div>
 
         <nav className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-widest uppercase font-mono">
@@ -535,7 +477,6 @@ const Nav = () => {
         </button>
       </div>
 
-      {/* Fullscreen Curtain Menu with Integrated ASCII Hands */}
       <div
         ref={menuRef}
         className="fixed inset-0 z-[120] bg-background flex flex-col justify-between px-5 py-2 select-none overflow-hidden"
@@ -544,7 +485,7 @@ const Nav = () => {
         }}
       >
         <div className="relative z-30 flex items-center justify-between w-full py-2">
-          <AnimatedLogo />
+          <StaticLogo />
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 focus:outline-none"
@@ -554,7 +495,6 @@ const Nav = () => {
           </button>
         </div>
 
-        {/* ASCII Left Hand Wrapper (Slides in from -100% X) */}
         <div
           ref={leftHandWrapRef}
           className="absolute bottom-0 left-0 z-10 hidden pointer-events-none sm:block will-change-transform"
@@ -562,7 +502,6 @@ const Nav = () => {
           <canvas ref={leftCanvasRef} className="block" />
         </div>
 
-        {/* Navigation Links */}
         <div
           ref={linksRef}
           className="relative z-20 flex flex-col items-center gap-4 pl-4 my-auto font-mono text-4xl font-semibold tracking-tight uppercase sm:text-6xl sm:pl-12"
@@ -577,7 +516,6 @@ const Nav = () => {
           ))}
         </div>
 
-        {/* ASCII Right Hand Wrapper (Slides in from +100% X) */}
         <div
           ref={rightHandWrapRef}
           className="absolute right-0 z-10 hidden pointer-events-none top-12 sm:block will-change-transform"
